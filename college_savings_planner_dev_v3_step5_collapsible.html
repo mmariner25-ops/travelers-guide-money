@@ -1,0 +1,1530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>College Savings Planner</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/pdfmake.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/vfs_fonts.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --bg:#f7f8fb; --card:#ffffff; --text:#1f2937; --muted:#6b7280; --border:#dbe2ea;
+      --green:#0b4a33; --green-2:#0f766e; --green-soft:#ecfdf5;
+      --gold:#b7791f; --gold-soft:#fff7ed; --gold-border:#fed7aa;
+      --shadow:0 12px 30px rgba(15,23,42,.08);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);line-height:1.45}
+    .calculator{max-width:1180px;margin:0 auto;padding:28px}
+    .header{text-align:center;margin-bottom:24px}
+    .brand-line{text-transform:uppercase;letter-spacing:.08em;font-size:.78rem;font-weight:900;color:var(--gold);margin-bottom:8px}
+    h1{margin:0 0 10px;font-size:clamp(2rem,4vw,3rem);letter-spacing:-.04em;color:var(--green)}
+    .header p{margin:0 auto;color:var(--muted);max-width:760px;font-size:1.05rem}
+    .layout{display:grid;grid-template-columns:390px 1fr;gap:24px;align-items:start}
+    .card,.table-card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:20px;box-shadow:var(--shadow)}
+    .card h2,.table-card h3{margin:0 0 16px;font-size:1.15rem}
+    .input-group{margin-bottom:14px}
+    label{display:block;font-weight:800;margin-bottom:6px;font-size:.92rem}
+    input,select{width:100%;border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:1rem;font-family:inherit;background:#fff}
+    input:focus,select:focus{outline:3px solid var(--green-soft);border-color:var(--green-2)}
+    .hint,.note{color:var(--muted);font-size:.82rem;margin-top:6px}
+    details{margin-top:12px;border-top:1px solid var(--border);padding-top:12px}
+    summary{cursor:pointer;font-weight:800;color:var(--green)}
+    .generated-box{margin-top:8px;background:var(--green-soft);border:1px solid #bbf7d0;border-radius:10px;padding:10px 12px}
+
+    .range-row{margin-top:8px}
+    input[type="range"]{padding:0;border:none;background:transparent}
+    .range-labels{display:flex;justify-content:space-between;color:var(--muted);font-size:.78rem;margin-top:4px}
+    .funding-display{
+      margin-top:8px;
+      background:var(--green-soft);
+      border:1px solid #bbf7d0;
+      border-radius:10px;
+      padding:10px 12px;
+    }
+
+    .generated-label{color:var(--gold);font-size:.78rem;font-weight:900;letter-spacing:.04em;text-transform:uppercase;margin-bottom:3px}
+    .generated-value{color:var(--green);font-size:1.15rem;font-weight:900}
+    .child-card{border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:14px;background:#fbfdff}
+    .child-top{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:10px}
+    .child-top strong{color:var(--green)}
+    .small-btn{padding:7px 10px;font-size:.78rem;background:#e5e7eb;color:#111827}
+    .hero-results{background:var(--card);border:1px solid var(--border);border-radius:22px;padding:clamp(24px,5vw,44px);box-shadow:var(--shadow);text-align:center}
+    .result-section + .result-section{margin-top:34px;padding-top:34px;border-top:1px solid var(--border)}
+    .eyebrow{text-transform:uppercase;letter-spacing:.08em;font-size:.78rem;font-weight:900;color:var(--gold);margin-bottom:8px}
+    .big-number{font-size:clamp(3.4rem,9vw,6.75rem);line-height:.95;letter-spacing:-.08em;font-weight:900;margin:0;color:var(--green)}
+    .on-track-inline{margin-top:12px;color:var(--green);font-size:clamp(1.6rem,4vw,2.5rem);font-weight:900;letter-spacing:-.04em}
+    .big-number-sub{margin:12px auto 0;max-width:720px;color:var(--muted);font-size:1.05rem}
+    .sentence{margin:18px auto 0;max-width:760px;font-size:1.05rem}
+    .success-title{color:var(--green);font-size:clamp(2.2rem,5vw,3.5rem);line-height:1;font-weight:900;letter-spacing:-.06em;margin:0 0 10px}
+    .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:22px;text-align:left}
+    .mini-stat{background:#f9fafb;border:1px solid var(--border);border-radius:14px;padding:14px;overflow:hidden}
+    .mini-stat.highlight{background:var(--gold-soft);border-color:var(--gold-border)}
+    .mini-stat.green{background:var(--green-soft);border-color:#bbf7d0}
+    .mini-stat .label{color:var(--muted);font-size:.82rem;margin-bottom:4px}
+    .mini-stat .value{font-size:1.25rem;font-weight:900}
+    .details-row{margin-top:22px;display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
+    button{appearance:none;border:none;border-radius:999px;padding:12px 18px;font-weight:900;cursor:pointer;background:var(--green);color:#fff;font-size:.95rem}
+    button:hover{filter:brightness(.94)}
+    button.secondary{background:#e5e7eb;color:#111827}
+    .advanced-output{margin-top:24px;display:none}
+    .advanced-output.open{display:block}
+    .advanced-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-top:18px}
+    .wide-card{grid-column:1/-1}
+    .chart-box{height:360px;margin:10px 0 16px;background:#fff;border:1px solid var(--border);border-radius:14px;padding:14px;position:relative}
+    .chart-box canvas{display:block;width:100%!important;height:100%!important}
+    .table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:12px}
+    table{width:100%;border-collapse:collapse;min-width:640px;background:#fff}
+    th,td{text-align:right;padding:10px 12px;border-bottom:1px solid var(--border);white-space:nowrap}
+    th:first-child,td:first-child{text-align:left}
+    th{background:var(--green);color:#fff;font-size:.82rem}
+    tr:last-child td{border-bottom:none}
+
+    .source-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:center}
+    .source-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+    .source-chart-box{height:260px;background:#fff;border:1px solid var(--border);border-radius:14px;padding:14px;position:relative}
+    .early-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:14px}
+    .early-card{background:#f9fafb;border:1px solid var(--border);border-radius:14px;padding:14px;text-align:center}
+    .early-card.highlight{background:var(--green-soft);border-color:#bbf7d0}
+    .early-card .label{color:var(--muted);font-size:.82rem;font-weight:800;margin-bottom:6px}
+    .early-card .value{font-size:1.35rem;font-weight:900;color:var(--green)}
+    .early-card .sub{color:var(--muted);font-size:.8rem;margin-top:6px}
+    @media(max-width:960px){.source-grid,.source-stats,.early-grid{grid-template-columns:1fr}}
+
+
+
+    .fully-fund-small{
+      text-align:left;
+    }
+    .fully-fund-small .value{
+      color:var(--green);
+      font-size:1.65rem;
+      font-weight:900;
+      letter-spacing:-.04em;
+      margin:4px 0;
+    }
+    .fully-fund-small .comparison{
+      color:var(--muted);
+      font-size:.86rem;
+      line-height:1.4;
+      margin-top:6px;
+    }
+    .fully-fund-small strong{
+      color:var(--green);
+    }
+
+    .jump-panel{
+      margin-top:24px;
+      background:var(--gold-soft);
+      border:1px solid var(--gold-border);
+      border-radius:18px;
+      padding:20px;
+      text-align:left;
+    }
+    .jump-panel h2{margin:0 0 8px;color:var(--green);font-size:1.25rem}
+    .jump-intro{color:var(--muted);margin:0 0 16px;font-size:.95rem}
+    .jump-number{
+      text-align:center;color:var(--green);font-weight:900;
+      font-size:clamp(2rem,5vw,3.5rem);letter-spacing:-.05em;line-height:1;margin:8px 0;
+    }
+    .jump-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:14px}
+    .jump-stat{background:#fff;border:1px solid var(--border);border-radius:14px;padding:14px;text-align:center}
+    .jump-stat .label{color:var(--muted);font-size:.8rem;margin-bottom:5px}
+    .jump-stat .value{color:var(--green);font-weight:900;font-size:1.2rem}
+    .lump-row{margin-top:18px;padding-top:16px;border-top:1px solid var(--gold-border);display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:end}
+    @media(max-width:960px){.jump-grid,.lump-row{grid-template-columns:1fr}}
+
+
+    .student-work-card{
+      margin-top:24px;
+      background:var(--green-soft);
+      border:1px solid #bbf7d0;
+      border-radius:18px;
+      padding:20px;
+      text-align:left;
+    }
+    .student-work-card h2{margin:0 0 8px;color:var(--green);font-size:1.25rem}
+    .student-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:14px}
+    .student-stat{background:#fff;border:1px solid var(--border);border-radius:14px;padding:14px;text-align:center}
+    .student-stat .label{color:var(--muted);font-size:.8rem;margin-bottom:5px}
+    .student-stat .value{color:var(--green);font-weight:900;font-size:1.2rem}
+    @media(max-width:960px){.student-grid{grid-template-columns:1fr}}
+
+
+    .tour-button{margin-top:16px;background:var(--gold)}
+    .tour-overlay{position:fixed;inset:0;z-index:30000;display:none;pointer-events:none}
+    .tour-overlay.open{display:block}
+    .tour-dim{position:absolute;inset:0;background:rgba(15,23,42,.56);pointer-events:auto}
+    body:not(.tour-welcome) .tour-dim{display:none}
+    .tour-card{
+      position:fixed;z-index:30050;width:min(430px, calc(100vw - 32px));background:#fff;opacity:1!important;filter:none!important;
+      border:1px solid var(--border);border-radius:20px;box-shadow:0 24px 70px rgba(0,0,0,.25);
+      padding:22px;pointer-events:auto;max-height:min(82vh,620px);overflow:auto
+    }
+    .tour-card.welcome{top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;max-width:560px;width:min(560px, calc(100vw - 32px))}
+    .tour-card h2{margin:0 0 8px;color:var(--green);font-size:1.55rem;letter-spacing:-.03em}
+    .tour-step-label{color:var(--gold);font-weight:900;text-transform:uppercase;letter-spacing:.08em;font-size:.78rem;margin-bottom:8px}
+    .tour-card p{color:var(--muted);margin:8px 0;line-height:1.55}
+
+    .tour-card button{opacity:1;filter:none}
+    .tour-card .tour-tip{opacity:1;filter:none}
+
+    .tour-card ul{margin:10px 0 0 20px;padding:0;color:var(--muted)}
+    .tour-card li{margin:4px 0}
+    .tour-tip{margin-top:14px;background:var(--gold-soft);border:1px solid var(--gold-border);border-radius:14px;padding:12px;color:var(--muted);font-size:.92rem}
+    .tour-tip strong{color:var(--green)}
+    .tour-actions{margin-top:18px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+    .tour-actions .secondary-link{background:transparent;color:var(--muted);padding:8px;border-radius:8px}
+    .tour-progress{display:flex;gap:6px;justify-content:center;margin-top:12px}
+    .tour-dot{width:8px;height:8px;border-radius:50%;background:#d1d5db}
+    .tour-dot.active{background:var(--green)}
+    .tour-highlight{position:relative;z-index:20000;box-shadow:0 0 0 9999px rgba(15,23,42,.56),0 0 0 5px rgba(255,255,255,.95),0 18px 45px rgba(0,0,0,.22);border-radius:18px;opacity:1!important;filter:none!important}
+    body.tour-active{overflow:auto}
+    @media(max-width:760px){
+      .tour-card{left:16px!important;right:16px!important;top:auto!important;bottom:16px!important;width:auto!important;transform:none!important;max-height:70vh;overflow:auto}
+    }
+
+    .tip-card{margin-top:24px;background:var(--gold-soft);border-color:var(--gold-border)}
+    .tip-label{color:var(--gold);font-weight:900;text-transform:uppercase;letter-spacing:.08em;font-size:.78rem;margin-bottom:8px}
+    .tip-card h2{color:var(--green)}
+    @media(max-width:960px){
+      .layout,.advanced-grid,.stats{grid-template-columns:1fr}
+      .calculator{padding:18px}
+    }
+  </style>
+</head>
+<body>
+<main class="calculator">
+  <section class="header">
+    <div class="brand-line">A Traveler's Guide to Money: A Traveler's Guide Resource</div>
+    <h1>College Savings Planner</h1>
+    <p>Estimate how much to save each month for one or more children, with college costs projected from today's dollars into future school years.</p>
+    <button type="button" class="tour-button" onclick="startTour(true)">Walk Me Through This</button>
+  </section>
+
+  <section class="layout">
+    <aside class="card tour-target" id="tour-plan-inputs">
+      <h2>Your College Plan</h2>
+
+      <details open class="tour-target" id="tour-costs">
+        <summary>1. Annual college costs</summary>
+        <p class="hint" style="margin-top:8px;">Start with the annual cost of one year of college in today's dollars.</p>
+        <div class="input-group" style="margin-top:12px;">
+          <label for="tuitionCost">Tuition & fees ($)</label>
+          <input id="tuitionCost" type="text" inputmode="numeric" value="12,000">
+        </div>
+        <div class="input-group">
+          <label for="roomBoardCost">Room & board ($)</label>
+          <input id="roomBoardCost" type="text" inputmode="numeric" value="14,000">
+        </div>
+        <div class="input-group">
+          <label for="otherCost">Other annual costs ($)</label>
+          <input id="otherCost" type="text" inputmode="numeric" value="4,000">
+          <div class="hint">Books, transportation, technology, supplies, fees, and personal expenses.</div>
+        </div>
+        <div class="generated-box">
+          <div class="generated-label">Total annual college cost</div>
+          <div class="generated-value" id="totalAnnualCostBox">$30,000/year</div>
+        </div>
+      </details>
+
+      <details open class="tour-target" id="tour-children">
+        <summary>2. Children</summary>
+        <p class="hint" style="margin-top:8px;">Who are you planning for? This determines the college timeline before any savings math is done.</p>
+        <div class="input-group" style="margin-top:12px;">
+          <label for="collegeYears">Years of college per child</label>
+          <input id="collegeYears" type="number" value="4" min="1" max="8" step="1">
+        </div>
+        <div id="childrenContainer" style="margin-top:12px;"></div>
+        <button type="button" onclick="addChild()">+ Add Child</button>
+      </details>
+
+      <details open class="tour-target" id="tour-current-savings-inputs">
+        <summary>3. Current savings</summary>
+        <p class="hint" style="margin-top:8px;">What have you already done? This establishes the baseline for your current plan.</p>
+        <div class="input-group" style="margin-top:12px;">
+          <label for="currentSavings">Current education savings ($)</label>
+          <input id="currentSavings" type="text" inputmode="numeric" value="0">
+          <div class="hint">Total already saved for education expenses.</div>
+        </div>
+
+        <div class="input-group">
+          <label for="currentMonthlyContribution">Current monthly contribution ($)</label>
+          <input id="currentMonthlyContribution" type="text" inputmode="numeric" value="0">
+          <div class="hint">What you currently save each month for college.</div>
+        </div>
+      </details>
+
+      <details open class="tour-target" id="tour-student-work">
+        <summary>4. Student work during college</summary>
+        <div class="input-group" style="margin-top:12px;">
+          <label for="studentHoursPerWeek">Hours worked per week</label>
+          <input id="studentHoursPerWeek" type="number" min="0" max="60" step="1" value="15">
+        </div>
+        <div class="input-group">
+          <label for="studentWeeksPerYear">Weeks worked per year</label>
+          <input id="studentWeeksPerYear" type="number" min="0" max="52" step="1" value="45">
+          <div class="hint">A conservative default allows for breaks, finals, travel, and transition weeks.</div>
+        </div>
+        <div class="input-group">
+          <label for="studentHourlyWage">Wage per hour ($)</label>
+          <input id="studentHourlyWage" type="text" inputmode="numeric" value="16">
+        </div>
+        <div class="generated-box">
+          <div class="generated-label">Total hours worked per year</div>
+          <div class="generated-value" id="studentHoursBox">675 hours/year</div>
+        </div>
+        <div class="hint">This estimates what each student could contribute during college. It does not automatically reduce the parent goal.</div>
+      </details>
+
+      <details open class="tour-target" id="tour-funding-goal">
+        <summary>5. Parent contribution goal</summary>
+        <div class="input-group" style="margin-top:12px;">
+          <label for="fundingPercent">Percent of college costs you plan to fund</label>
+          <input id="fundingPercent" type="range" min="0" max="100" step="5" value="100">
+          <div class="range-labels"><span>0%</span><span>50%</span><span>100%</span></div>
+          <div class="funding-display">
+            <div class="generated-label">Parent funding target</div>
+            <div class="generated-value" id="fundingPercentDisplay">100% of projected costs</div>
+          </div>
+          <div class="hint">This goal represents all savings accumulated before college starts. It may include parent contributions, student earnings, grandparents' contributions, and gifts.</div>
+        </div>
+      </details>
+
+      <details class="tour-target" id="tour-investment-assumptions">
+        <summary>6. Investment assumptions</summary>
+        <p class="hint" style="margin-top:8px;">These are refinement settings. Most families can leave the defaults in place.</p>
+        <div class="input-group" style="margin-top:12px;">
+          <label for="returnBeforeCollege">Expected investment return before college (%)</label>
+          <input id="returnBeforeCollege" type="number" value="8" min="-20" max="30" step="0.25">
+        </div>
+        <div class="input-group">
+          <label for="returnDuringCollege">Expected investment return during college (%)</label>
+          <input id="returnDuringCollege" type="number" value="5" min="-20" max="30" step="0.25">
+        </div>
+        <div class="input-group">
+          <label for="tuitionInflation">Tuition inflation (%)</label>
+          <input id="tuitionInflation" type="number" value="4" min="0" max="15" step="0.25">
+        </div>
+        <div class="input-group">
+          <label for="roomBoardInflation">Room & board inflation (%)</label>
+          <input id="roomBoardInflation" type="number" value="3" min="0" max="15" step="0.25">
+        </div>
+        <div class="input-group">
+          <label for="otherInflation">Other expense inflation (%)</label>
+          <input id="otherInflation" type="number" value="2.5" min="0" max="15" step="0.25">
+        </div>
+        <div class="input-group">
+          <label for="continueContributions">Contributions during college</label>
+          <select id="continueContributions">
+            <option value="yes" selected>Continue monthly contributions through college</option>
+            <option value="no">Stop contributions when college begins</option>
+          </select>
+        </div>
+      </details>
+
+      <p class="note">This calculator uses planning estimates only. Actual school costs, aid, scholarships, returns, and family choices will vary.</p>
+    </aside>
+
+    <section>
+      <div class="hero-results tour-target" id="tour-results">
+        <div class="tour-target" id="tour-results-summary">
+          <div class="eyebrow" id="statusEyebrow">Monthly savings needed</div>
+          <p class="big-number" id="monthlyNeeded">$0</p>
+          <p class="big-number-sub">per month</p>
+          <p class="sentence" id="mainSentence"></p>
+        </div>
+
+        <div class="stats">
+          <div class="mini-stat">
+            <div class="label">Full projected college cost</div>
+            <div class="value" id="totalCostBox">$0</div>
+          </div>
+          <div class="mini-stat green">
+            <div class="label">Planned funding target</div>
+            <div class="value" id="fundingTargetBox">$0</div>
+          </div>
+          <div class="mini-stat">
+            <div class="label">Projected fund at first enrollment</div>
+            <div class="value" id="fundAtEnrollmentBox">$0</div>
+          </div>
+          <div class="mini-stat highlight">
+            <div class="label" id="gapLabel">Additional needed</div>
+            <div class="value" id="additionalNeededBox">$0/mo</div>
+          </div>
+        </div>
+
+        <div class="student-work-card">
+          <div class="tip-label">Student Contribution</div>
+          <h2>Student work can help close the gap.</h2>
+          <p class="jump-intro">This estimates what each student could contribute through work during college.</p>
+          <div class="student-grid">
+            <div class="student-stat">
+              <div class="label">Hours worked per year</div>
+              <div class="value" id="studentHoursOutput">675</div>
+            </div>
+            <div class="student-stat">
+              <div class="label">Estimated take-home per year</div>
+              <div class="value" id="studentAnnualTakeHomeBox">$0</div>
+            </div>
+            <div class="student-stat">
+              <div class="label">Estimated 4-year contribution</div>
+              <div class="value" id="studentFourYearBox">$0</div>
+            </div>
+          </div>
+          <p class="note" id="studentGapNote" style="margin-top:12px;"></p>
+        </div>
+
+        <div class="jump-panel">
+          <div class="tip-label">Traveler's Tip</div>
+          <h2>Jump Start Your Savings</h2>
+          <p class="jump-intro">Investing earlier gives your money more time to grow. This example shows how a lump sum today can reduce the amount you need to save later.</p>
+
+          <div class="jump-grid" style="align-items:stretch;">
+            <div class="jump-stat" style="grid-column:auto;">
+              <div class="label">If you invested $1,000 today...</div>
+              <div class="jump-number" id="thousandFutureBox">$0</div>
+              <div class="sub">...it could be worth about this much when your first child starts college.</div>
+            </div>
+            <div class="jump-stat fully-fund-small" style="grid-column:span 2;">
+              <div class="label">Amount needed to fully fund today</div>
+              <div class="value" id="fullyFundTodayBox">$0</div>
+              <div class="comparison" id="fullyFundComparisonBox">
+                This is less than the projected total cost because money invested now has time to grow.
+              </div>
+            </div>
+          </div>
+
+          <div class="jump-grid">
+            <div class="jump-stat">
+              <div class="label">Monthly savings needed</div>
+              <div class="value" id="thousandMonthlyBox">$0 → $0</div>
+            </div>
+            <div class="jump-stat">
+              <div class="label">Future monthly savings avoided</div>
+              <div class="value" id="thousandAvoidedBox">$0</div>
+            </div>
+            <div class="jump-stat">
+              <div class="label">Future savings replaced</div>
+              <div class="value" id="thousandReplacedBox">$0</div>
+            </div>
+          </div>
+
+          <div class="lump-row">
+            <div class="input-group" style="margin-bottom:0;">
+              <label for="customLumpSum">Try your own lump sum today ($)</label>
+              <input id="customLumpSum" type="text" inputmode="numeric" value="5,000">
+            </div>
+            <div class="jump-stat">
+              <div class="label">New monthly savings needed</div>
+              <div class="value" id="customMonthlyBox">$0/mo</div>
+            </div>
+          </div>
+
+          <div class="jump-grid">
+            <div class="jump-stat">
+              <div class="label">Projected value at college</div>
+              <div class="value" id="customFutureBox">$0</div>
+            </div>
+            <div class="jump-stat">
+              <div class="label">Future monthly savings avoided</div>
+              <div class="value" id="customAvoidedBox">$0</div>
+            </div>
+            <div class="jump-stat">
+              <div class="label">Future savings replaced</div>
+              <div class="value" id="customReplacedBox">$0</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="details-row">
+          <button onclick="toggleAdvanced()">View Detailed Numbers</button>
+          <button class="secondary" onclick="downloadSnapshotReport()">Download Snapshot Report</button>
+        </div>
+      </div>
+
+      <div class="card tip-card">
+        <div class="tip-label">Traveler's Tip</div>
+        <h2>College is more than tuition.</h2>
+        <p class="note">Scholarships and grants often reduce tuition but may not cover room, board, books, transportation, technology, or other educational expenses. Separating these categories helps families plan more realistically.</p>
+      </div>
+    </section>
+  </section>
+
+  <section class="advanced-output" id="advancedOutput">
+    <div class="advanced-grid">
+      <div class="table-card wide-card">
+        <h3>Current Plan Timeline</h3>
+        <p>Green shows your current savings plan using the savings and monthly contribution you entered. Gold shows the total projected college bills for that calendar year. Hover to see each child’s age for that year.</p>
+        <div class="chart-box"><canvas id="balanceChart"></canvas></div>
+      </div>
+
+      <div class="table-card wide-card">
+        <h3>Sources of Your College Fund</h3>
+        <p>This shows how much of the plan is funded by your contributions and how much is projected to come from investment growth.</p>
+        <div class="source-grid">
+          <div class="source-stats">
+            <div class="mini-stat">
+              <div class="label">Your contributions</div>
+              <div class="value" id="totalContributionsBox">$0</div>
+            </div>
+            <div class="mini-stat green">
+              <div class="label">Investment growth</div>
+              <div class="value" id="totalGrowthBox">$0</div>
+            </div>
+            <div class="mini-stat highlight">
+              <div class="label">Growth share</div>
+              <div class="value" id="growthShareBox">0%</div>
+            </div>
+          </div>
+          <div class="source-chart-box">
+            <canvas id="sourceChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="table-card wide-card">
+        <h3>The Power of Starting Early</h3>
+        <p>For your assumptions, this shows how a $1,000 lump sum can grow by the time college begins.</p>
+        <div class="early-grid">
+          <div class="early-card highlight">
+            <div class="label">Invest today</div>
+            <div class="value" id="earlyTodayBox">$0</div>
+            <div class="sub" id="earlyTodaySub">by college</div>
+          </div>
+          <div class="early-card">
+            <div class="label">Invest 5 years later</div>
+            <div class="value" id="earlyFiveBox">$0</div>
+            <div class="sub" id="earlyFiveSub">by college</div>
+          </div>
+          <div class="early-card">
+            <div class="label">Invest 10 years later</div>
+            <div class="value" id="earlyTenBox">$0</div>
+            <div class="sub" id="earlyTenSub">by college</div>
+          </div>
+        </div>
+        <p class="note" id="earlySavingsNote" style="margin-top:14px;"></p>
+      </div>
+
+      <div class="card tip-card wide-card" style="margin-top:0;">
+        <div class="tip-label">Traveler's Tip</div>
+        <h2>Time is powerful.</h2>
+        <p class="note">Every dollar invested earlier has more years to grow. Starting sooner often reduces the total amount you need to save because investment growth does more of the work. Time is one of the most valuable assets an investor has, and even modest amounts invested early can grow significantly through the power of compounding.</p>
+      </div>
+
+      <div class="table-card wide-card">
+        <h3>College Cost Breakdown</h3>
+        <p>Total projected college bills by year, broken into tuition, room & board, and other costs.</p>
+        <div class="chart-box"><canvas id="costChart"></canvas></div>
+      </div>
+
+      <div class="table-card wide-card">
+        <h3>Family College Timeline</h3>
+        <p>Estimated account growth, contributions, college costs, and ending balance using your current monthly contribution.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Year</th><th>Child</th><th>Beginning Balance</th><th>Contributions</th><th>Growth</th><th>Parent Target Cost</th><th>Ending Balance</th></tr></thead>
+            <tbody id="timelineTable"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="table-card wide-card">
+        <h3>Child Summary</h3>
+        <p>Projected college cost by child.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Child</th><th>Years Until College</th><th>Full First Year Cost</th><th>Parent Target Total</th></tr></thead>
+            <tbody id="childSummaryTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="tour-overlay" id="tourOverlay" aria-hidden="true">
+  <div class="tour-dim"></div>
+  <div class="tour-card" id="tourCard"></div>
+</div>
+
+<script>
+  const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+  let childCount = 0;
+  let balanceChartInstance = null;
+  let costChartInstance = null;
+  let sourceChartInstance = null;
+
+  function val(id) {
+    const raw = String(document.getElementById(id).value || "").replace(/,/g, "");
+    const n = parseFloat(raw);
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  function formatInputNumber(value) {
+    const raw = String(value || "").replace(/[^\d.]/g, "");
+    if (raw === "") return "";
+    const parts = raw.split(".");
+    const whole = parts[0] || "0";
+    const decimal = parts.length > 1 ? "." + parts.slice(1).join("") : "";
+    return Number(whole).toLocaleString("en-US") + decimal;
+  }
+
+  function formatMoneyInput(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.value = formatInputNumber(el.value);
+  }
+
+  function percent(n) {
+    return `${Number(n).toFixed(2).replace(/\.00$/, "")}%`;
+  }
+
+  function annualCostAt(yearsFromNow) {
+    const tuition = val("tuitionCost") * Math.pow(1 + val("tuitionInflation") / 100, yearsFromNow);
+    const room = val("roomBoardCost") * Math.pow(1 + val("roomBoardInflation") / 100, yearsFromNow);
+    const other = val("otherCost") * Math.pow(1 + val("otherInflation") / 100, yearsFromNow);
+    return { tuition, room, other, total: tuition + room + other };
+  }
+
+  function getChildren() {
+    const cards = [...document.querySelectorAll(".child-card")];
+    return cards.map(card => {
+      const id = card.dataset.childId;
+      const name = document.getElementById(`childName_${id}`).value || `Child ${id}`;
+      const currentAge = Math.max(0, val(`childAge_${id}`));
+      const startAge = Math.max(currentAge, val(`collegeStartAge_${id}`));
+      const yearsUntilCollege = Math.max(0, startAge - currentAge);
+      return { id, name, currentAge, startAge, yearsUntilCollege };
+    }).sort((a,b) => a.yearsUntilCollege - b.yearsUntilCollege);
+  }
+
+  function buildSchoolEvents(children) {
+    const collegeYears = Math.max(1, Math.floor(val("collegeYears")));
+    const events = [];
+    children.forEach(child => {
+      for (let y = 0; y < collegeYears; y++) {
+        const year = child.yearsUntilCollege + y;
+        const cost = annualCostAt(year);
+        events.push({ child: child.name, year, schoolYear: y + 1, ...cost });
+      }
+    });
+    return events.sort((a,b) => a.year - b.year || a.child.localeCompare(b.child));
+  }
+
+  function fundingPercent() {
+    const el = document.getElementById("fundingPercent");
+    return el ? Math.max(0, Math.min(100, val("fundingPercent"))) / 100 : 1;
+  }
+
+  function simulate(monthlyContribution) {
+    const children = getChildren();
+    const events = buildSchoolEvents(children);
+    const currentSavings = val("currentSavings");
+    const returnBefore = val("returnBeforeCollege") / 100;
+    const returnDuring = val("returnDuringCollege") / 100;
+    const continueContrib = document.getElementById("continueContributions").value === "yes";
+    const lastYear = events.length ? Math.max(...events.map(e => e.year)) : 0;
+    const firstCollegeYear = events.length ? Math.min(...events.map(e => e.year)) : 0;
+
+    let balance = currentSavings;
+    const timeline = [];
+    let totalCost = 0;
+    let fullTotalCost = 0;
+    const parentShare = fundingPercent();
+    let fundAtFirstEnrollment = null;
+    let totalContributions = currentSavings;
+    let totalGrowth = 0;
+
+    for (let year = 0; year <= lastYear; year++) {
+      const rate = year < firstCollegeYear ? returnBefore : returnDuring;
+      const beginning = Math.max(0, balance);
+      const isCollegeYear = events.some(e => e.year === year);
+      const contributions = (!isCollegeYear || continueContrib) ? monthlyContribution * 12 : 0;
+      const afterContributions = beginning + contributions;
+      const growth = afterContributions * rate;
+      totalContributions += contributions;
+      totalGrowth += growth;
+      const yearEvents = events.filter(e => e.year === year);
+      const fullCollegeCost = yearEvents.reduce((sum, e) => sum + e.total, 0);
+      const collegeCost = fullCollegeCost * parentShare;
+      fullTotalCost += fullCollegeCost;
+      totalCost += collegeCost;
+      const ending = Math.max(0, afterContributions + growth - collegeCost);
+
+      if (year === firstCollegeYear && fundAtFirstEnrollment === null) {
+        fundAtFirstEnrollment = beginning;
+      }
+
+      timeline.push({
+        year,
+        label: year === 0 ? "Today" : (isCollegeYear ? `College Yr ${year - firstCollegeYear + 1}` : `Year ${year}`),
+        child: yearEvents.map(e => e.child).join(", ") || "Saving years",
+        beginning,
+        contributions,
+        growth,
+        collegeCost,
+        fullCollegeCost,
+        ending
+      });
+
+      balance = ending;
+    }
+
+    const childSummaries = children.map(child => {
+      const childEvents = events.filter(e => e.child === child.name);
+      const fullTotal = childEvents.reduce((sum,e) => sum + e.total, 0);
+      return {
+        name: child.name,
+        yearsUntilCollege: child.yearsUntilCollege,
+        firstYearCost: childEvents.length ? childEvents[0].total : 0,
+        targetFirstYearCost: childEvents.length ? childEvents[0].total * parentShare : 0,
+        fullTotalCost: fullTotal,
+        totalCost: fullTotal * parentShare
+      };
+    });
+
+    return {
+      children,
+      events,
+      timeline,
+      totalCost,
+      fullTotalCost,
+      parentShare,
+      finalBalance: balance,
+      fundAtFirstEnrollment: fundAtFirstEnrollment ?? currentSavings,
+      childSummaries,
+      monthlyContribution,
+      continueContrib,
+      totalContributions,
+      totalGrowth
+    };
+  }
+
+  function requiredMonthlyContribution() {
+    let low = 0;
+    let high = 10000;
+    for (let i = 0; i < 50; i++) {
+      const mid = (low + high) / 2;
+      const result = simulate(mid);
+      if (result.finalBalance >= 0.01) high = mid;
+      else low = mid;
+    }
+    return high;
+  }
+
+  function addChild(defaults = {}) {
+    childCount += 1;
+    const id = childCount;
+    const div = document.createElement("div");
+    div.className = "child-card";
+    div.dataset.childId = id;
+    div.innerHTML = `
+      <div class="child-top">
+        <strong>Child ${id}</strong>
+        <button type="button" class="small-btn" onclick="removeChild(${id})">Remove</button>
+      </div>
+      <div class="input-group">
+        <label for="childName_${id}">Child name</label>
+        <input id="childName_${id}" type="text" value="${defaults.name || `Child ${id}`}">
+      </div>
+      <div class="input-group">
+        <label for="childAge_${id}">Current age</label>
+        <input id="childAge_${id}" type="number" min="0" max="30" step="1" value="${defaults.age ?? 8}">
+      </div>
+      <div class="input-group">
+        <label for="collegeStartAge_${id}">College start age</label>
+        <input id="collegeStartAge_${id}" type="number" min="10" max="35" step="1" value="${defaults.startAge ?? 18}">
+      </div>
+      <div class="generated-box">
+        <div class="generated-label">Years until college</div>
+        <div class="generated-value" id="yearsUntil_${id}">10 years</div>
+      </div>
+    `;
+    document.getElementById("childrenContainer").appendChild(div);
+    div.querySelectorAll("input").forEach(input => input.addEventListener("input", update));
+    update();
+  }
+
+  function removeChild(id) {
+    const card = document.querySelector(`.child-card[data-child-id="${id}"]`);
+    if (card) card.remove();
+    update();
+  }
+
+  function updateChildYearBoxes(children) {
+    children.forEach(child => {
+      const el = document.getElementById(`yearsUntil_${child.id}`);
+      if (el) el.textContent = `${child.yearsUntilCollege} year${child.yearsUntilCollege === 1 ? "" : "s"}`;
+    });
+  }
+
+  function monthlyNeededWithExtraLumpSum(lumpSum) {
+    const currentInput = document.getElementById("currentSavings");
+    const originalValue = currentInput.value;
+    const originalCurrentSavings = val("currentSavings");
+
+    currentInput.value = String(originalCurrentSavings + Math.max(0, lumpSum));
+    const needed = requiredMonthlyContribution();
+
+    currentInput.value = originalValue;
+    return needed;
+  }
+
+  function earliestCollegeYears() {
+    const children = getChildren();
+    return children.length ? Math.max(0, Math.min(...children.map(c => c.yearsUntilCollege))) : 0;
+  }
+
+  function futureValueOfLumpSum(lumpSum) {
+    const years = earliestCollegeYears();
+    const rate = val("returnBeforeCollege") / 100;
+    return Math.max(0, lumpSum) * Math.pow(1 + rate, years);
+  }
+
+  function currentPlanValueAtEnd() {
+    const currentMonthly = val("currentMonthlyContribution");
+    const result = simulate(currentMonthly);
+    return {
+      value: Math.max(0, result.totalCost + result.finalBalance),
+      result
+    };
+  }
+
+  function simulateUnclamped(monthlyContribution) {
+    const children = getChildren();
+    const events = buildSchoolEvents(children);
+    const currentSavings = val("currentSavings");
+    const returnBefore = val("returnBeforeCollege") / 100;
+    const returnDuring = val("returnDuringCollege") / 100;
+    const continueContrib = document.getElementById("continueContributions").value === "yes";
+    const lastYear = events.length ? Math.max(...events.map(e => e.year)) : 0;
+    const firstCollegeYear = events.length ? Math.min(...events.map(e => e.year)) : 0;
+    const parentShare = fundingPercent();
+
+    let balance = currentSavings;
+    let totalCost = 0;
+
+    for (let year = 0; year <= lastYear; year++) {
+      const rate = year < firstCollegeYear ? returnBefore : returnDuring;
+      const beginning = balance;
+      const isCollegeYear = events.some(e => e.year === year);
+      const contributions = (!isCollegeYear || continueContrib) ? monthlyContribution * 12 : 0;
+      const afterContributions = beginning + contributions;
+      const growth = afterContributions > 0 ? afterContributions * rate : 0;
+      const yearEvents = events.filter(e => e.year === year);
+      const fullCollegeCost = yearEvents.reduce((sum, e) => sum + e.total, 0);
+      const collegeCost = fullCollegeCost * parentShare;
+      totalCost += collegeCost;
+      balance = afterContributions + growth - collegeCost;
+    }
+
+    return { finalBalance: balance, totalCost };
+  }
+
+  function currentPlanCoverage(result) {
+    const currentMonthly = val("currentMonthlyContribution");
+    const currentPlan = simulateUnclamped(currentMonthly);
+    const target = Math.max(0, result.totalCost);
+
+    const remainingGap = Math.max(0, -currentPlan.finalBalance);
+    const coveredAmount = Math.max(0, target - remainingGap);
+    const coveragePercent = target > 0 ? Math.min(100, (coveredAmount / target) * 100) : 100;
+
+    return { currentPlan, target, remainingGap, coveredAmount, coveragePercent };
+  }
+
+  function renderCurrentCoveragePanel(result, needed, additional) {
+    const coverage = currentPlanCoverage(result);
+
+    document.getElementById("currentCoveragePercentBox").textContent = `${coverage.coveragePercent.toFixed(0)}%`;
+    document.getElementById("currentPlanValueBox").textContent = money.format(coverage.coveredAmount);
+    document.getElementById("selectedTargetValueBox").textContent = money.format(coverage.target);
+    document.getElementById("remainingGapValueBox").textContent = money.format(coverage.remainingGap);
+
+    if (coverage.coveragePercent >= 100) {
+      document.getElementById("currentCoverageSentence").innerHTML =
+        `Your current savings plan is projected to fully fund your selected college savings goal.`;
+    } else {
+      document.getElementById("currentCoverageSentence").innerHTML =
+        `Your current savings plan is projected to fund about <strong>${coverage.coveragePercent.toFixed(0)}%</strong> of your selected college savings goal.`;
+    }
+  }
+
+  function fullyFundTodayAmount() {
+    const originalCurrentSavings = val("currentSavings");
+    const currentInput = document.getElementById("currentSavings");
+    const originalValue = currentInput.value;
+
+    let low = 0;
+    let high = 1000000;
+
+    for (let i = 0; i < 60; i++) {
+      const mid = (low + high) / 2;
+      currentInput.value = String(originalCurrentSavings + mid);
+      const result = simulate(0);
+
+      if (result.finalBalance >= 0.01) {
+        high = mid;
+      } else {
+        low = mid;
+      }
+    }
+
+    currentInput.value = originalValue;
+    return high;
+  }
+
+  function estimatedStudentWithholdingRate(grossAnnualIncome) {
+    if (grossAnnualIncome <= 5000) return 0.05;
+    if (grossAnnualIncome <= 15000) return 0.10;
+    if (grossAnnualIncome <= 30000) return 0.15;
+    return 0.20;
+  }
+
+  function studentWorkData() {
+    const hoursPerWeek = Math.max(0, val("studentHoursPerWeek"));
+    const weeksPerYear = Math.max(0, val("studentWeeksPerYear"));
+    const wage = Math.max(0, val("studentHourlyWage"));
+    const hoursPerYear = hoursPerWeek * weeksPerYear;
+    const grossAnnual = hoursPerYear * wage;
+    const withholdingRate = estimatedStudentWithholdingRate(grossAnnual);
+    const annualTakeHome = grossAnnual * (1 - withholdingRate);
+    const collegeYears = Math.max(1, Math.floor(val("collegeYears")));
+    const totalContribution = annualTakeHome * collegeYears;
+    return { hoursPerWeek, weeksPerYear, wage, hoursPerYear, grossAnnual, withholdingRate, annualTakeHome, totalContribution, collegeYears };
+  }
+
+  function renderStudentWorkPanel(result) {
+    const data = studentWorkData();
+    const children = result.childSummaries || [];
+    const childCount = Math.max(1, children.length);
+    const totalGap = Math.max(0, result.fullTotalCost - result.totalCost);
+    const gapPerChild = totalGap / childCount;
+    const remainingGapPerChild = Math.max(0, gapPerChild - data.totalContribution);
+
+    document.getElementById("studentHoursBox").textContent = `${Math.round(data.hoursPerYear).toLocaleString("en-US")} hours/year`;
+    document.getElementById("studentHoursOutput").textContent = Math.round(data.hoursPerYear).toLocaleString("en-US");
+    document.getElementById("studentAnnualTakeHomeBox").textContent = money.format(data.annualTakeHome);
+    document.getElementById("studentFourYearBox").textContent = money.format(data.totalContribution);
+
+    if (totalGap > 0) {
+      document.getElementById("studentGapNote").innerHTML =
+        `At your selected parent funding percentage, the estimated gap is about <strong>${money.format(gapPerChild)}</strong> per child. Student work could cover about <strong>${money.format(Math.min(gapPerChild, data.totalContribution))}</strong> of that amount, leaving about <strong>${money.format(remainingGapPerChild)}</strong> per child for scholarships, grants, family help, direct payments, or other sources.`;
+    } else {
+      document.getElementById("studentGapNote").innerHTML =
+        `You selected a parent funding goal of 100%, so there is no planned gap. Student work could still help with personal expenses, books, transportation, or reduce the amount parents need to save.`;
+    }
+  }
+
+  function renderJumpStartPanel(baseNeeded) {
+    const years = earliestCollegeYears();
+    const monthsToFirstCollege = Math.max(1, years * 12);
+
+    function updateScenario(lump, prefix) {
+      const newNeeded = monthlyNeededWithExtraLumpSum(lump);
+      const monthlyAvoided = Math.max(0, baseNeeded - newNeeded);
+      const futureAvoided = monthlyAvoided * monthsToFirstCollege;
+      const futureValue = futureValueOfLumpSum(lump);
+      const replaced = lump + futureAvoided;
+
+      if (prefix === "thousand") {
+        document.getElementById("thousandFutureBox").textContent = money.format(futureValue);
+        document.getElementById("thousandMonthlyBox").textContent = `${money.format(baseNeeded)} → ${money.format(newNeeded)}`;
+      } else {
+        document.getElementById("customFutureBox").textContent = money.format(futureValue);
+        document.getElementById("customMonthlyBox").textContent = money.format(newNeeded) + "/mo";
+      }
+
+      document.getElementById(prefix + "AvoidedBox").textContent = money.format(futureAvoided);
+      document.getElementById(prefix + "ReplacedBox").textContent = money.format(replaced);
+    }
+
+    const fullToday = fullyFundTodayAmount();
+    const target = simulate(baseNeeded).totalCost;
+    const growthValue = Math.max(0, target - fullToday);
+    document.getElementById("fullyFundTodayBox").textContent = money.format(fullToday);
+    document.getElementById("fullyFundComparisonBox").innerHTML =
+      `That is <strong>${money.format(growthValue)}</strong> less than the selected parent funding target of <strong>${money.format(target)}</strong>. Why? Because money invested today has years to grow before college bills are due.`;
+    updateScenario(1000, "thousand");
+    updateScenario(val("customLumpSum"), "custom");
+  }
+
+  function powerOfStartingEarly() {
+    const children = getChildren();
+    const earliest = children.length ? Math.min(...children.map(c => c.yearsUntilCollege)) : 0;
+    const rate = val("returnBeforeCollege") / 100;
+    function futureValueAfterDelay(delayYears) {
+      const yearsInvested = Math.max(0, earliest - delayYears);
+      return 1000 * Math.pow(1 + rate, yearsInvested);
+    }
+    const today = futureValueAfterDelay(0);
+    const five = futureValueAfterDelay(5);
+    const ten = futureValueAfterDelay(10);
+    const needed = requiredMonthlyContribution();
+    const withExtra = simulate(needed);
+    const monthlyValue = earliest > 0 ? today / Math.max(1, earliest * 12) : today;
+    return { earliest, today, five, ten, monthlyValue };
+  }
+
+  function renderEducationPanels(result) {
+    const growthShare = (result.totalContributions + result.totalGrowth) > 0
+      ? result.totalGrowth / (result.totalContributions + result.totalGrowth)
+      : 0;
+
+    document.getElementById("totalContributionsBox").textContent = money.format(result.totalContributions);
+    document.getElementById("totalGrowthBox").textContent = money.format(result.totalGrowth);
+    document.getElementById("growthShareBox").textContent = `${Math.max(0, growthShare * 100).toFixed(0)}%`;
+
+    const early = powerOfStartingEarly();
+    document.getElementById("earlyTodayBox").textContent = money.format(early.today);
+    document.getElementById("earlyFiveBox").textContent = money.format(early.five);
+    document.getElementById("earlyTenBox").textContent = money.format(early.ten);
+    document.getElementById("earlyTodaySub").textContent = `${early.earliest} years of growth`;
+    document.getElementById("earlyFiveSub").textContent = `${Math.max(0, early.earliest - 5)} years of growth`;
+    document.getElementById("earlyTenSub").textContent = `${Math.max(0, early.earliest - 10)} years of growth`;
+    document.getElementById("earlySavingsNote").innerHTML =
+      `At <strong>${percent(val("returnBeforeCollege"))}</strong>, each <strong>$1,000</strong> invested today is projected to become <strong>${money.format(early.today)}</strong> by the first college year. That can reduce the amount you need to save later.`;
+
+    renderSourceChart(result);
+  }
+
+  function renderSourceChart(result) {
+    const canvas = document.getElementById("sourceChart");
+    if (!canvas || typeof Chart === "undefined") return;
+
+    const data = {
+      labels: ["Your contributions", "Investment growth"],
+      datasets: [{
+        data: [Math.max(0, result.totalContributions), Math.max(0, result.totalGrowth)],
+        backgroundColor: ["rgba(183,121,31,.75)", "rgba(11,74,51,.75)"],
+        borderColor: ["#B7791F", "#0B4A33"],
+        borderWidth: 1
+      }]
+    };
+
+    const options = {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: "bottom" },
+        tooltip: {
+          callbacks: {
+            label(ctx) {
+              return `${ctx.label}: ${money.format(ctx.parsed)}`;
+            }
+          }
+        }
+      }
+    };
+
+    if (sourceChartInstance) {
+      sourceChartInstance.data = data;
+      sourceChartInstance.options = options;
+      sourceChartInstance.update();
+    } else {
+      sourceChartInstance = new Chart(canvas, { type: "doughnut", data, options });
+    }
+  }
+
+  function renderTables(result) {
+    const timelineBody = document.getElementById("timelineTable");
+    timelineBody.innerHTML = "";
+    result.timeline.forEach(row => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${row.label}</td><td>${row.child}</td><td>${money.format(row.beginning)}</td><td>${money.format(row.contributions)}</td><td>${money.format(row.growth)}</td><td>${money.format(row.collegeCost)}</td><td>${money.format(row.ending)}</td>`;
+      timelineBody.appendChild(tr);
+    });
+
+    const childBody = document.getElementById("childSummaryTable");
+    childBody.innerHTML = "";
+    result.childSummaries.forEach(row => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${row.name}</td><td>${row.yearsUntilCollege}</td><td>${money.format(row.firstYearCost)}</td><td>${money.format(row.totalCost)}</td>`;
+      childBody.appendChild(tr);
+    });
+  }
+
+  function currentCalendarYear() {
+    return new Date().getFullYear();
+  }
+
+  function childAgesForYear(children, yearOffset) {
+    return children.map(child => {
+      const age = child.currentAge + yearOffset;
+      const schoolYear = age - child.startAge + 1;
+      let stage = "";
+      if (schoolYear >= 1 && schoolYear <= Math.max(1, Math.floor(val("collegeYears")))) {
+        const names = ["Freshman", "Sophomore", "Junior", "Senior"];
+        stage = ` (${names[schoolYear - 1] || `Year ${schoolYear}`})`;
+      }
+      return `${child.name} — ${age}${stage}`;
+    });
+  }
+
+  function renderCharts(result) {
+    const balanceCanvas = document.getElementById("balanceChart");
+    const costCanvas = document.getElementById("costChart");
+    const startYear = currentCalendarYear();
+
+    const finalYear = result.timeline.length ? result.timeline[result.timeline.length - 1].year + 1 : 1;
+    const chartTimeline = [
+      ...result.timeline.map(r => ({
+        year: r.year,
+        portfolio: r.beginning,
+        cost: r.fullCollegeCost || 0,
+        ageLines: childAgesForYear(result.children, r.year)
+      })),
+      {
+        year: finalYear,
+        portfolio: 0,
+        cost: 0,
+        ageLines: childAgesForYear(result.children, finalYear)
+      }
+    ];
+
+    const timelineLabels = chartTimeline.map(r => String(startYear + r.year));
+    const ageNotes = chartTimeline.map(r => r.ageLines);
+    const collegeStartYear = result.events.length ? startYear + Math.min(...result.events.map(e => e.year)) : null;
+
+    const balanceData = {
+      labels: timelineLabels,
+      datasets: [
+        {
+          label: "Beginning portfolio balance",
+          data: chartTimeline.map(r => r.portfolio),
+          borderColor: "#0B4A33",
+          backgroundColor: "rgba(11,74,51,.08)",
+          borderWidth: 5,
+          pointRadius: 3,
+          tension: 0.25,
+          fill: false
+        },
+        {
+          label: "Total college costs",
+          data: chartTimeline.map(r => r.cost),
+          borderColor: "#B7791F",
+          backgroundColor: "rgba(183,121,31,.08)",
+          borderWidth: 4,
+          pointRadius: 3,
+          tension: 0.2,
+          fill: false
+        }
+      ]
+    };
+
+    const chartOptions = {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: "index", intersect: false },
+      plugins: {
+        legend: { position: "bottom" },
+        tooltip: {
+          callbacks: {
+            title(items) {
+              return items.length ? items[0].label : "";
+            },
+            label(ctx) {
+              return `${ctx.dataset.label}: ${money.format(ctx.parsed.y)}`;
+            },
+            afterBody(items) {
+              if (!items.length) return [];
+              const index = items[0].dataIndex;
+              const lines = ["", "Children"];
+              ageNotes[index].forEach(line => lines.push(line));
+              return lines;
+            },
+            footer(items) {
+              if (!items.length || !collegeStartYear) return "";
+              return items[0].label === String(collegeStartYear) ? "College begins" : "";
+            }
+          }
+        }
+      },
+      scales: {
+        x: { grid: { display: false } },
+        y: {
+          ticks: {
+            callback(v) {
+              const a = Math.abs(v);
+              if (a >= 1000000) return "$" + (v / 1000000).toFixed(1).replace(/\.0$/, "") + "M";
+              if (a >= 1000) return "$" + (v / 1000).toFixed(0) + "K";
+              return money.format(v);
+            }
+          },
+          grid: { color: "#E5E7EB" }
+        }
+      }
+    };
+
+    if (balanceChartInstance) {
+      balanceChartInstance.data = balanceData;
+      balanceChartInstance.options = chartOptions;
+      balanceChartInstance.update();
+    } else {
+      balanceChartInstance = new Chart(balanceCanvas, { type: "line", data: balanceData, options: chartOptions });
+    }
+
+    const costLabels = result.events.map(e => `${currentCalendarYear() + e.year}`);
+    const costData = {
+      labels: costLabels,
+      datasets: [
+        { label: "Tuition", data: result.events.map(e => e.tuition), backgroundColor: "rgba(11,74,51,.75)" },
+        { label: "Room & board", data: result.events.map(e => e.room), backgroundColor: "rgba(183,121,31,.65)" },
+        { label: "Other", data: result.events.map(e => e.other), backgroundColor: "rgba(107,114,128,.55)" }
+      ]
+    };
+
+    const costOptions = {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: "bottom" },
+        tooltip: {
+          callbacks: {
+            label(ctx) { return `${ctx.dataset.label}: ${money.format(ctx.parsed.y)}`; }
+          }
+        }
+      },
+      scales: {
+        x: { stacked: true, grid: { display: false } },
+        y: { stacked: true, ticks: { callback(v) { return money.format(v); } }, grid: { color: "#E5E7EB" } }
+      }
+    };
+
+    if (costChartInstance) {
+      costChartInstance.data = costData;
+      costChartInstance.options = costOptions;
+      costChartInstance.update();
+    } else {
+      costChartInstance = new Chart(costCanvas, { type: "bar", data: costData, options: costOptions });
+    }
+  }
+
+  function pdfCell(label, value, fillColor) {
+    return { stack:[{text:label,fontSize:8,bold:true,color:"#6B7280",margin:[0,0,0,5]},{text:value,fontSize:13,bold:true,color:"#1F2937"}], fillColor:fillColor || "#FFFFFF", margin:[9,9,9,9] };
+  }
+
+  function downloadSnapshotReport() {
+    update();
+    if (typeof pdfMake === "undefined") {
+      alert("PDF generator failed to load. Please check your internet connection.");
+      return;
+    }
+    const needed = requiredMonthlyContribution();
+    const result = simulate(needed);
+    const current = val("currentMonthlyContribution");
+    const additional = Math.max(0, needed - current);
+    const childRows = [
+      [{text:"Child",bold:true,color:"#FFFFFF",alignment:"left"},{text:"Years",bold:true,color:"#FFFFFF",alignment:"right"},{text:"Full First Year",bold:true,color:"#FFFFFF",alignment:"right"},{text:"Parent Target",bold:true,color:"#FFFFFF",alignment:"right"}],
+      ...result.childSummaries.map(c => [{text:c.name,alignment:"left"},{text:String(c.yearsUntilCollege),alignment:"right"},{text:money.format(c.firstYearCost),alignment:"right"},{text:money.format(c.totalCost),alignment:"right"}])
+    ];
+
+    const timelineRows = [
+      [{text:"Year",bold:true,color:"#FFFFFF",alignment:"left"},{text:"Child",bold:true,color:"#FFFFFF",alignment:"left"},{text:"Growth",bold:true,color:"#FFFFFF",alignment:"right"},{text:"College Cost",bold:true,color:"#FFFFFF",alignment:"right"},{text:"Ending Balance",bold:true,color:"#FFFFFF",alignment:"right"}],
+      ...result.timeline.map(r => [{text:r.label,alignment:"left"},{text:r.child,alignment:"left"},{text:money.format(r.growth),alignment:"right"},{text:money.format(r.collegeCost),alignment:"right"},{text:money.format(r.ending),alignment:"right"}])
+    ];
+
+    const docDefinition = {
+      pageSize:"LETTER",
+      pageMargins:[44,34,44,28],
+      defaultStyle:{font:"Roboto",fontSize:8.8,color:"#1F2937"},
+      content:[
+        {columns:[{text:"A TRAVELER'S GUIDE TO MONEY",bold:true,color:"#0B4A33",fontSize:9,characterSpacing:1.1},{text:"COLLEGE SAVINGS SNAPSHOT",bold:true,color:"#0B4A33",fontSize:9,alignment:"right"}],margin:[0,0,0,10]},
+        {text:"College Savings\nSnapshot Report",fontSize:30,bold:true,color:"#0B4A33",lineHeight:.95,margin:[0,0,0,8]},
+        {text:"A simple projection for college costs, savings needs, and education planning.",color:"#6B7280",margin:[0,0,0,12]},
+        {text:"Monthly savings needed",bold:true,fontSize:12,margin:[0,6,0,2]},
+        {columns:[{text:money.format(needed),fontSize:40,bold:true,color:"#0F5132",width:"auto"},{text:" per month",fontSize:14,bold:true,color:"#0F5132",margin:[8,23,0,0]}]},
+        {text:`Current monthly contribution: ${money.format(current)}. Additional needed: ${money.format(additional)} per month. Current plan coverage: ${currentPlanCoverage(result).coveragePercent.toFixed(0)}%.`,color:"#6B7280",margin:[0,0,0,12]},
+        {table:{widths:["*","*","*"],body:[[
+          pdfCell("Full Projected College Cost",money.format(result.fullTotalCost),"#ECFDF5"),
+          pdfCell("Parent Funding Target",money.format(result.totalCost)),
+          pdfCell("Funding Percentage",`${Math.round(result.parentShare * 100)}%`, "#FFF7ED")
+        ],[
+          pdfCell("Your Contributions",money.format(result.totalContributions)),
+          pdfCell("Investment Growth",money.format(result.totalGrowth), "#ECFDF5"),
+          pdfCell("Student Work / Year",money.format(studentWorkData().annualTakeHome))
+        ]]},layout:{hLineColor:()=>"#DBE2EA",vLineColor:()=>"#DBE2EA",hLineWidth:()=>1,vLineWidth:()=>1},margin:[0,0,0,12]},
+        {text:"Child Summary",bold:true,fontSize:12,margin:[0,4,0,5]},
+        {table:{headerRows:1,widths:["*","*","*","*"],body:childRows},layout:{fillColor:r=>r===0?"#0B4A33":null,hLineColor:()=>"#E5E7EB",vLineColor:()=>"#E5E7EB",hLineWidth:()=>.5,vLineWidth:()=>.5},margin:[0,0,0,12]},
+        {table:{widths:["*"],body:[[{
+          stack:[{text:"TRAVELER'S TIP",color:"#B7791F",bold:true,fontSize:9,characterSpacing:.6,margin:[0,0,0,6]},{text:"College is more than tuition.",bold:true,color:"#0B4A33",fontSize:13,margin:[0,0,0,5]},{text:"Scholarships and grants often reduce tuition but may not cover room, board, books, transportation, technology, or other educational expenses.",color:"#6B7280"},
+          {text:"Time is powerful.",bold:true,color:"#0B4A33",fontSize:12,margin:[0,8,0,3]},
+          {text:"Every dollar invested earlier has more years to grow. Starting sooner often reduces the total amount you need to save because investment growth does more of the work.",color:"#6B7280"}],
+          fillColor:"#FFF7ED",margin:[13,13,13,13]
+        }]]},layout:{hLineColor:()=>"#FED7AA",vLineColor:()=>"#FED7AA",hLineWidth:()=>1,vLineWidth:()=>1},margin:[0,0,0,12]},
+        {text:"College Timeline",bold:true,fontSize:12,margin:[0,2,0,5],pageBreak:"before"},
+        {table:{headerRows:1,widths:["*","*","*","*","*"],body:timelineRows},layout:{fillColor:r=>r===0?"#0B4A33":null,hLineColor:()=>"#E5E7EB",vLineColor:()=>"#E5E7EB",hLineWidth:()=>.5,vLineWidth:()=>.5}},
+        {text:"Educational projection only — not financial, legal, tax, or investment advice.",color:"#6B7280",fontSize:7.7,italics:true,margin:[0,8,0,0]}
+      ]
+    };
+    pdfMake.createPdf(docDefinition).download("College-Savings-Snapshot-Report.pdf");
+  }
+
+  function update() {
+    ["currentSavings","currentMonthlyContribution","tuitionCost","roomBoardCost","otherCost","studentHourlyWage"].forEach(formatMoneyInput);
+    const totalAnnual = val("tuitionCost") + val("roomBoardCost") + val("otherCost");
+    document.getElementById("totalAnnualCostBox").textContent = `${money.format(totalAnnual)}/year`;
+
+    const children = getChildren();
+    updateChildYearBoxes(children);
+    const needed = requiredMonthlyContribution();
+    const result = simulate(needed);
+    const current = val("currentMonthlyContribution");
+    const additional = Math.max(0, needed - current);
+
+    const monthlyNeededEl = document.getElementById("monthlyNeeded");
+    const monthlySubEl = document.querySelector(".big-number-sub");
+    monthlyNeededEl.classList.remove("on-track-big");
+    monthlyNeededEl.textContent = money.format(needed);
+    monthlySubEl.textContent = "per month";
+    document.getElementById("fundingPercentDisplay").textContent = `${Math.round(result.parentShare * 100)}% of projected costs`;
+    document.getElementById("totalCostBox").textContent = money.format(result.fullTotalCost);
+    document.getElementById("fundingTargetBox").textContent = money.format(result.totalCost);
+    document.getElementById("fundAtEnrollmentBox").textContent = money.format(result.fundAtFirstEnrollment);
+    document.getElementById("additionalNeededBox").textContent = money.format(additional) + "/mo";
+    renderStudentWorkPanel(result);
+    renderJumpStartPanel(needed);
+
+    const coverage = currentPlanCoverage(result);
+
+    const isOnTrack = coverage.remainingGap <= 1;
+
+    if (isOnTrack) {
+      const margin = Math.max(0, current - needed);
+      document.getElementById("statusEyebrow").textContent = "Monthly Savings Needed";
+      monthlyNeededEl.textContent = money.format(needed);
+      monthlySubEl.textContent = "per month";
+      document.getElementById("gapLabel").textContent = "Monthly Margin";
+      document.getElementById("additionalNeededBox").textContent = money.format(margin) + "/mo";
+      document.getElementById("mainSentence").innerHTML =
+        `<div class="on-track-inline">ON TRACK ✓</div><div style="margin-top:8px;">Your current plan is projected to fully fund your college savings goal.</div>`;
+    } else {
+      document.getElementById("statusEyebrow").textContent = "Monthly Savings Needed";
+      document.getElementById("gapLabel").textContent = "Additional Needed";
+      document.getElementById("additionalNeededBox").textContent = money.format(additional) + "/mo";
+      document.getElementById("mainSentence").innerHTML =
+        `Your current savings plan is projected to fund about <strong>${coverage.coveragePercent.toFixed(0)}%</strong> of your college savings goal.<br><br>To stay on track, you should save approximately <strong>${money.format(needed)}</strong> per month — about <strong>${money.format(additional)}</strong> more per month than you currently save.`;
+    }
+
+    const currentResult = simulate(current);
+    renderTables(currentResult);
+    renderEducationPanels(result);
+    renderCharts(currentResult);
+  }
+
+  function toggleAdvanced() {
+    document.getElementById("advancedOutput").classList.toggle("open");
+    if (document.getElementById("advancedOutput").classList.contains("open")) document.getElementById("advancedOutput").scrollIntoView({behavior:"smooth"});
+  }
+
+  const tourSteps = [
+    {
+      type: "welcome",
+      title: "Welcome to the College Funding Planner",
+      body: `Build your family's college funding plan in about five minutes.<br><br>This planner is more than a calculator. It helps you move through the planning workflow in a natural order: costs, children, current savings, student work, parent contribution goal, and advanced assumptions.`,
+      tip: "",
+      target: null
+    },
+    {
+      label: "Step 1",
+      title: "Estimate Annual College Costs",
+      body: `Start with the annual cost for tuition, room & board, and other expenses in today's dollars. This gives the calculator a realistic cost baseline before any savings math begins.`,
+      tip: `<strong>Traveler's Tip:</strong> Room & board can be a large part of college costs. Living at home for the first one or two years may save thousands of dollars.`,
+      target: "tour-costs"
+    },
+    {
+      label: "Step 2",
+      title: "Add Your Children",
+      body: `Enter who you are planning for, their current ages, and how many years of college you want to plan for. This sets the timeline for when each college bill may arrive.`,
+      tip: `<strong>Traveler's Tip:</strong> The timeline matters. A child starting college in 3 years needs a very different savings plan than a child starting in 15 years.`,
+      target: "tour-children"
+    },
+    {
+      label: "Step 3",
+      title: "Enter Your Current Savings",
+      body: `Add what has already been saved and what is currently being saved each month. This establishes your baseline and helps the calculator decide whether you are already on track.`,
+      tip: `<strong>Traveler's Tip:</strong> Money saved before college has time to grow. Starting early often matters more than trying to save large amounts later.`,
+      target: "tour-current-savings-inputs"
+    },
+    {
+      label: "Step 4",
+      title: "Estimate Student Work During College",
+      body: `Estimate what each student could reasonably contribute during college through work. Enter hours per week, weeks per year, and hourly wage.`,
+      tip: `<strong>Traveler's Tip:</strong> Be realistic. The default weeks allow for breaks, finals, travel, and transition weeks.`,
+      target: "tour-student-work"
+    },
+    {
+      label: "Step 5",
+      title: "Choose Your Parent Contribution Goal",
+      body: `Choose the percentage of projected college costs you want accumulated before the first tuition bill arrives. This goal can include parent contributions, student earnings, grandparents' contributions, and gifts.`,
+      tip: `<strong>Traveler's Tip:</strong> A good college plan may include savings, student work, scholarships, grants, family help, and direct payments during college.`,
+      target: "tour-funding-goal"
+    },
+    {
+      label: "Step 6",
+      title: "Review Investment Assumptions",
+      body: `Most users can leave these defaults alone. Advanced users can refine expected investment returns, college inflation rates, and whether contributions continue during college.`,
+      tip: `<strong>Traveler's Tip:</strong> Small changes to inflation or return assumptions can make a big difference over many years.`,
+      target: "tour-investment-assumptions"
+    },
+    {
+      label: "Step 7",
+      title: "Review Your Plan",
+      body: `Review the monthly savings needed, ON TRACK status, student contribution, funding gap, timeline, and PDF report.`,
+      tip: `<strong>Traveler's Tip:</strong> Revisit your plan each year. College costs, savings, income, scholarships, and family priorities can all change.`,
+      target: "tour-results-summary"
+    }
+  ];
+
+  let currentTourStep = 0;
+
+  function startTour(manual = false) {
+    currentTourStep = 0;
+    showTourStep();
+  }
+
+  function skipTour() {
+    closeTour();
+  }
+
+  function closeTour() {
+    document.body.classList.remove("tour-active", "tour-welcome");
+    document.getElementById("tourOverlay").classList.remove("open");
+    document.getElementById("tourOverlay").setAttribute("aria-hidden", "true");
+    document.querySelectorAll(".tour-highlight").forEach(el => el.classList.remove("tour-highlight"));
+  }
+
+  function nextTourStep() {
+    if (currentTourStep >= tourSteps.length - 1) {
+      skipTour();
+      return;
+    }
+    currentTourStep += 1;
+    showTourStep();
+  }
+
+  function previousTourStep() {
+    if (currentTourStep <= 0) return;
+    currentTourStep -= 1;
+    showTourStep();
+  }
+
+  function tourDots() {
+    return `<div class="tour-progress">${tourSteps.map((_, i) => `<span class="tour-dot ${i === currentTourStep ? "active" : ""}"></span>`).join("")}</div>`;
+  }
+
+  function showTourStep() {
+    const overlay = document.getElementById("tourOverlay");
+    const card = document.getElementById("tourCard");
+    const step = tourSteps[currentTourStep];
+
+    document.body.classList.add("tour-active");
+    overlay.classList.add("open");
+    overlay.setAttribute("aria-hidden", "false");
+    document.querySelectorAll(".tour-highlight").forEach(el => el.classList.remove("tour-highlight"));
+
+    const isWelcome = step.type === "welcome";
+    document.body.classList.toggle("tour-welcome", isWelcome);
+    card.className = isWelcome ? "tour-card welcome" : "tour-card";
+    card.removeAttribute("style");
+
+    card.innerHTML = `
+      ${step.label ? `<div class="tour-step-label">${step.label}</div>` : ""}
+      <h2>${step.title}</h2>
+      <p>${step.body}</p>
+      ${step.tip ? `<div class="tour-tip">${step.tip}<br><span style="color:var(--gold);font-weight:900;">Learn More →</span></div>` : ""}
+      ${tourDots()}
+      <div class="tour-actions">
+        <button type="button" class="secondary-link" onclick="skipTour()">Skip Tutorial →</button>
+        <div style="display:flex;gap:8px;">
+          ${currentTourStep > 0 ? `<button type="button" class="secondary" onclick="previousTourStep()">Back</button>` : ""}
+          <button type="button" onclick="nextTourStep()">${isWelcome ? "Start Tour" : (currentTourStep === tourSteps.length - 1 ? "Finish" : "Next")}</button>
+        </div>
+      </div>
+    `;
+
+    if (isWelcome || !step.target) return;
+
+    const target = document.getElementById(step.target);
+    if (!target) return;
+
+    if (target.tagName && target.tagName.toLowerCase() === "details") {
+      target.open = true;
+    }
+
+    target.classList.add("tour-highlight");
+    target.scrollIntoView({ behavior: "smooth", block: "center" });
+
+    setTimeout(() => {
+      const rect = target.getBoundingClientRect();
+      const cardWidth = Math.min(430, window.innerWidth - 32);
+      const cardHeight = Math.min(card.offsetHeight || 360, window.innerHeight - 32);
+
+      let left;
+      if (rect.right + cardWidth + 28 <= window.innerWidth - 16) {
+        left = rect.right + 28;
+      } else if (rect.left - cardWidth - 28 >= 16) {
+        left = rect.left - cardWidth - 28;
+      } else {
+        left = Math.max(16, Math.min(window.innerWidth - cardWidth - 16, (window.innerWidth - cardWidth) / 2));
+      }
+
+      let top = rect.top + Math.min(40, rect.height / 3);
+      if (top + cardHeight > window.innerHeight - 16) {
+        top = window.innerHeight - cardHeight - 16;
+      }
+      if (top < 16) top = 16;
+
+      card.style.left = `${left}px`;
+      card.style.top = `${top}px`;
+      card.style.transform = "none";
+    }, 350);
+  }
+
+  window.addEventListener("resize", () => {
+    if (document.getElementById("tourOverlay").classList.contains("open")) showTourStep();
+  });
+
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape" && document.getElementById("tourOverlay").classList.contains("open")) skipTour();
+  });
+
+  window.addEventListener("load", () => {
+    setTimeout(() => startTour(false), 700);
+  });
+
+
+  ["currentSavings","currentMonthlyContribution","tuitionCost","roomBoardCost","otherCost","studentHourlyWage"].forEach(id => {
+    const el = document.getElementById(id);
+    formatMoneyInput(id);
+    el.addEventListener("input", () => {
+      const cursorFromEnd = el.value.length - el.selectionStart;
+      formatMoneyInput(id);
+      const newPos = Math.max(0, el.value.length - cursorFromEnd);
+      el.setSelectionRange(newPos,newPos);
+      update();
+    });
+  });
+
+  const customLumpEl = document.getElementById("customLumpSum");
+  if (customLumpEl) {
+    formatMoneyInput("customLumpSum");
+    customLumpEl.addEventListener("input", () => {
+      const cursorFromEnd = customLumpEl.value.length - customLumpEl.selectionStart;
+      formatMoneyInput("customLumpSum");
+      const newPos = Math.max(0, customLumpEl.value.length - cursorFromEnd);
+      customLumpEl.setSelectionRange(newPos, newPos);
+      update();
+    });
+  }
+
+  ["collegeYears","fundingPercent","studentHoursPerWeek","studentWeeksPerYear","tuitionInflation","roomBoardInflation","otherInflation","returnBeforeCollege","returnDuringCollege","continueContributions"].forEach(id => {
+    document.getElementById(id).addEventListener("input", update);
+  });
+
+  addChild({name:"Child 1", age:8, startAge:18});
+</script>
+</body>
+</html>
