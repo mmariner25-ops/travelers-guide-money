@@ -1,0 +1,1742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Retirement Savings Projection Calculator</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/pdfmake.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/vfs_fonts.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --bg: #f7f8fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --border: #dbe2ea;
+      --green: #0b4a33;
+      --green-2: #0f766e;
+      --green-soft: #ecfdf5;
+      --gold: #b7791f;
+      --gold-soft: #fff7ed;
+      --gold-border: #fed7aa;
+      --shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.45;
+    }
+
+    .calculator {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px;
+    }
+
+    .header {
+      margin-bottom: 24px;
+      text-align: center;
+    }
+
+    .header h1 {
+      margin: 0 0 10px;
+      font-size: clamp(2rem, 4vw, 3rem);
+      letter-spacing: -0.04em;
+      color: var(--green);
+    }
+
+    .header p {
+      margin: 0 auto;
+      color: var(--muted);
+      max-width: 760px;
+      font-size: 1.05rem;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+
+    .card, .table-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 20px;
+      box-shadow: var(--shadow);
+    }
+
+    .card h2, .table-card h3 {
+      margin: 0 0 16px;
+      font-size: 1.15rem;
+    }
+
+    .input-group { margin-bottom: 15px; }
+
+    label {
+      display: block;
+      font-weight: 800;
+      margin-bottom: 6px;
+      font-size: 0.92rem;
+    }
+
+    input, textarea {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 1rem;
+      font-family: inherit;
+      background: #fff;
+    }
+
+    textarea {
+      min-height: 115px;
+      resize: vertical;
+    }
+
+    input:focus, textarea:focus {
+      outline: 3px solid var(--green-soft);
+      border-color: var(--green-2);
+    }
+
+    .hint, .note {
+      color: var(--muted);
+      font-size: 0.82rem;
+      margin-top: 6px;
+    }
+
+    .generated-box {
+      margin-top: 8px;
+      background: var(--green-soft);
+      border: 1px solid #bbf7d0;
+      border-radius: 10px;
+      padding: 10px 12px;
+    }
+
+    .generated-box .generated-label {
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 800;
+      margin-bottom: 3px;
+    }
+
+    .generated-box .generated-value {
+      color: var(--green);
+      font-size: 1.15rem;
+      font-weight: 900;
+    }
+
+    details {
+      margin-top: 12px;
+      border-top: 1px solid var(--border);
+      padding-top: 12px;
+    }
+
+    summary {
+      cursor: pointer;
+      font-weight: 800;
+      color: var(--green);
+    }
+
+    .hero-results {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      padding: clamp(24px, 5vw, 44px);
+      box-shadow: var(--shadow);
+      text-align: center;
+    }
+
+    .result-section + .result-section {
+      margin-top: 34px;
+      padding-top: 34px;
+      border-top: 1px solid var(--border);
+    }
+
+    .eyebrow {
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 0.78rem;
+      font-weight: 900;
+      color: var(--gold);
+      margin-bottom: 8px;
+    }
+
+    .big-number {
+      font-size: clamp(3.4rem, 9vw, 6.75rem);
+      line-height: 0.95;
+      letter-spacing: -0.08em;
+      font-weight: 900;
+      margin: 0;
+      color: var(--green);
+    }
+
+    .big-number-sub {
+      margin: 12px auto 0;
+      max-width: 720px;
+      color: var(--muted);
+      font-size: 1.05rem;
+    }
+
+    .goal-achieved-note {
+      display: none;
+      margin: 14px auto 0;
+      color: var(--green);
+      font-weight: 900;
+      font-size: 1.05rem;
+    }
+
+    .sentence {
+      margin: 18px auto 0;
+      max-width: 760px;
+      font-size: 1.05rem;
+    }
+
+    .success-panel {
+      background: var(--green-soft);
+      border: 1px solid #bbf7d0;
+      border-radius: 18px;
+      padding: 24px;
+      margin-top: 12px;
+    }
+
+    .success-title {
+      color: var(--green);
+      font-size: clamp(2.4rem, 6vw, 4rem);
+      line-height: 1;
+      font-weight: 900;
+      letter-spacing: -0.06em;
+      margin: 0 0 12px;
+    }
+
+    .savings-gap {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-top: 22px;
+      text-align: left;
+    }
+
+    .mini-stat {
+      background: #f9fafb;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      overflow: hidden;
+    }
+
+    .mini-stat.highlight {
+      background: var(--gold-soft);
+      border-color: var(--gold-border);
+    }
+
+    .mini-stat .label {
+      color: var(--muted);
+      font-size: 0.82rem;
+      margin-bottom: 4px;
+    }
+
+    .mini-stat .value {
+      font-size: 1.25rem;
+      font-weight: 900;
+    }
+
+    .details-row {
+      margin-top: 22px;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      appearance: none;
+      border: none;
+      border-radius: 999px;
+      padding: 12px 18px;
+      font-weight: 900;
+      cursor: pointer;
+      background: var(--green);
+      color: #fff;
+      font-size: 0.95rem;
+    }
+
+    button:hover { filter: brightness(0.94); }
+
+    button.secondary {
+      background: #e5e7eb;
+      color: #111827;
+    }
+
+    .advanced-output {
+      margin-top: 24px;
+      display: none;
+    }
+
+    .advanced-output.open { display: block; }
+
+    .advanced-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+      margin-top: 18px;
+    }
+
+    .wide-card {
+      grid-column: 1 / -1;
+    }
+
+    .wide-card table {
+      min-width: 0;
+    }
+
+    .compact-detail-table {
+      min-width: 0 !important;
+      width: 100%;
+      table-layout: fixed;
+    }
+
+    .compact-detail-table th {
+      width: 45%;
+      text-align: left;
+    }
+
+    .compact-detail-table td {
+      width: 55%;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .table-card p {
+      margin: 0 0 12px;
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 560px;
+      background: #fff;
+    }
+
+    th, td {
+      text-align: right;
+      white-space: normal;
+      word-break: break-word;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    th:first-child, td:first-child { text-align: left; }
+
+    th {
+      background: var(--green);
+      color: #fff;
+      font-size: 0.82rem;
+    }
+
+    tr.base-row {
+      background: var(--gold-soft);
+      font-weight: 900;
+    }
+
+    tr:last-child td { border-bottom: none; }
+
+
+    .chart-box {
+      height: 360px;
+      margin: 10px 0 16px;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+    }
+
+    .chart-box canvas {
+      display: block;
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    .table-dropdown {
+      margin-top: 14px;
+      border-top: none;
+      padding-top: 0;
+    }
+
+    .table-dropdown summary {
+      display: inline-block;
+      background: #e5e7eb;
+      color: #111827;
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-size: 0.9rem;
+    }
+
+    .table-dropdown .table-wrap {
+      margin-top: 14px;
+    }
+
+    /* Chart.js override */
+
+    .chart-box {
+      height: 360px;
+      margin: 10px 0 16px;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      position: relative;
+      overflow: visible;
+    }
+
+    .chart-box canvas {
+      display: block;
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    .purpose-card { margin-top: 24px; }
+
+
+
+    /* Guided tutorial walkthrough */
+    .tour-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.68);
+      z-index: 9998;
+      display: none;
+      pointer-events: none;
+    }
+
+    body.tour-active .tour-backdrop { display: block; }
+
+    .tour-highlight {
+      position: relative;
+      z-index: 10000;
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 0 0 4px rgba(251, 191, 36, 0.95), 0 18px 48px rgba(0, 0, 0, 0.28);
+    }
+
+    .tour-panel {
+      position: fixed;
+      z-index: 10001;
+      width: min(430px, calc(100vw - 32px));
+      background: #ffffff;
+      color: var(--text);
+      border: 1px solid var(--gold-border);
+      border-radius: 18px;
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.34);
+      padding: 18px;
+      display: none;
+    }
+
+    body.tour-active .tour-panel { display: block; }
+
+    .tour-kicker {
+      color: var(--gold);
+      font-size: 0.78rem;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .tour-panel h3 {
+      margin: 0 0 8px;
+      color: var(--green);
+      font-size: 1.25rem;
+      line-height: 1.15;
+    }
+
+    .tour-panel p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .tour-progress {
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 800;
+    }
+
+    .tour-actions {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+
+    .tour-actions .left-actions,
+    .tour-actions .right-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .tour-button-light {
+      background: #e5e7eb;
+      color: #111827;
+    }
+
+    .tour-button-ghost {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+
+    .tour-start-button {
+      margin-top: 14px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .tutorial-launcher {
+      margin-top: 16px;
+      text-align: center;
+    }
+
+    @media (max-width: 640px) {
+      .tour-panel {
+        left: 16px !important;
+        right: 16px !important;
+        top: auto !important;
+        bottom: 16px !important;
+        width: auto;
+      }
+    }
+
+    @media (max-width: 960px) {
+      .layout, .advanced-grid, .savings-gap {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="calculator">
+    <section class="header">
+      <div style="text-transform:uppercase; letter-spacing:.08em; font-size:.78rem; font-weight:900; color:#b7791f; margin-bottom:8px;">
+        A Traveler's Guide to Money: A Traveler's Guide Resource
+      </div>
+      <h1>Retirement Savings Projection Calculator</h1>
+      <p>Estimate your retirement income, see whether you are on track, and download a simple Retirement Savings Snapshot Report.</p>
+      <div class="tutorial-launcher"><button type="button" class="secondary" onclick="startTutorial()">Start Tutorial Walkthrough</button></div>
+    </section>
+
+    <section class="layout">
+      <aside class="card">
+        <h2>Your Assumptions</h2>
+
+        <div class="tour-number-inputs">
+        <div class="input-group">
+          <label for="startingBalance">Starting balance ($)</label>
+          <input id="startingBalance" type="text" inputmode="numeric" value="0" min="0" step="1000">
+          <div class="hint">This is the amount you currently have saved and invested.</div>
+        </div>
+
+        <div class="input-group">
+          <label for="monthlyContribution">Monthly contribution ($)</label>
+          <input id="monthlyContribution" type="text" inputmode="numeric" value="0" min="0" step="50">
+          <div class="hint">This is the amount you plan to save and invest each month.</div>
+        </div>
+
+        <div class="input-group">
+          <label for="currentAge">Current age</label>
+          <input id="currentAge" type="number" value="" min="0" max="120" step="1">
+          <div class="hint">Enter your current age.</div>
+        </div>
+
+        <div class="input-group">
+          <label for="retirementAge">Desired retirement age</label>
+          <input id="retirementAge" type="number" value="" min="1" max="120" step="1">
+          <div class="hint">Enter the age when you would like to retire.</div>
+
+          <div class="generated-box">
+            <div class="generated-label">Years until retirement</div>
+            <div class="generated-value" id="yearsUntilRetirementDisplay">0 years</div>
+            <div class="hint">This is calculated from your current age and desired retirement age.</div>
+          </div>
+
+          <input id="years" type="hidden" value="">
+        </div>
+        </div>
+
+        <div class="input-group">
+          <label for="annualReturn">Annual investment return (%)</label>
+          <input id="annualReturn" type="number" value="8" min="-20" max="30" step="0.25">
+          <div class="hint">This is the average annual growth rate of your investments. Historical stock market returns have often averaged around 8%–10% over long periods, but future returns are not guaranteed.</div>
+        </div>
+
+        <div class="input-group">
+          <label for="desiredAnnualWithdrawal">Desired annual retirement income ($)</label>
+          <input id="desiredAnnualWithdrawal" type="text" inputmode="numeric" value="" min="0" step="1000">
+          <div class="hint">How much annual income would you like your retirement savings to provide in today's dollars?</div>
+          <div class="generated-box">
+            <div class="generated-label">Monthly income</div>
+            <div class="generated-value" id="desiredMonthlyIncomeInput">$0/mo</div>
+            <div class="hint">Your stated average monthly income based upon your total annual income.</div>
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label for="withdrawalRate">Annual withdrawal rate (%)</label>
+          <input id="withdrawalRate" type="number" value="3" min="0.1" max="15" step="0.1">
+          <div class="hint">This is the percentage of your retirement portfolio you plan to withdraw each year. Lower withdrawal rates are generally more conservative and may allow your savings to last longer.</div>
+        </div>
+
+        <details>
+          <summary>Advanced table settings</summary>
+
+          <div class="input-group" style="margin-top:12px;">
+            <label for="inflation">Annual inflation rate (%)</label>
+            <input id="inflation" type="number" value="3" min="0" max="20" step="0.25">
+            <div class="hint">Inflation measures how prices increase over time and reduces the purchasing power of money.</div>
+          </div>
+
+          <div class="input-group">
+            <label for="contributionIncrement">Contribution table increment ($)</label>
+            <input id="contributionIncrement" type="text" inputmode="numeric" value="250" min="1" step="50">
+            <div class="hint">Controls the step size in the contribution sensitivity table.</div>
+          </div>
+
+          <div class="input-group">
+            <label for="withdrawalIncrement">Withdrawal-rate increment (%)</label>
+            <input id="withdrawalIncrement" type="number" value="0.5" min="0.1" step="0.1">
+            <div class="hint">Controls the step size in the withdrawal rate sensitivity table.</div>
+          </div>
+
+          <div class="input-group">
+            <label for="returnIncrement">Return sensitivity increment (%)</label>
+            <input id="returnIncrement" type="number" value="2" min="0.1" step="0.25">
+            <div class="hint">Example: if your return assumption is 10% and this increment is 2%, the table will show 8%, 10%, and 12%.</div>
+          </div>
+        </details>
+
+        <p class="note">Note: This calculator assumes monthly contributions and monthly compounding. Actual investment results will vary, but over long periods the difference is typically small.</p>
+      </aside>
+
+      <section>
+        <div class="hero-results">
+          <div class="result-section">
+            <div class="eyebrow">Projected retirement income</div>
+            <p class="big-number" id="monthlyWithdrawal">$0</p>
+            <p class="big-number-sub">per month in today’s dollars</p>
+            <p class="goal-achieved-note" id="goalAchievedNote">Goal Achieved ✓</p>
+            <p class="sentence" id="incomeSentence"></p>
+          </div>
+
+          <div class="result-section" id="goalResultSection">
+            <div class="eyebrow" id="goalEyebrow">Savings needed to reach your goal</div>
+            <div id="goalNumberWrap">
+              <p class="big-number" id="requiredMonthlyContribution">$0</p>
+              <p class="big-number-sub">per month invested</p>
+            </div>
+            <div id="goalSuccessWrap" class="success-panel" style="display:none;">
+              <p class="success-title">On Track ✓</p>
+              <p class="sentence" style="margin-top:0;">You are projected to meet or exceed your retirement income goal.</p>
+              <p class="sentence" style="margin-top:8px;">Continue saving and investing to maintain financial margin and prepare for future needs.</p>
+            </div>
+            <p class="sentence" id="goalSentence"></p>
+
+            <div class="savings-gap" id="behindGoalStats">
+              <div class="mini-stat">
+                <div class="label">Currently saving</div>
+                <div class="value" id="currentMonthlyContribution">$0</div>
+              </div>
+              <div class="mini-stat">
+                <div class="label">Total needed</div>
+                <div class="value" id="totalSavingsNeeded">$0</div>
+              </div>
+              <div class="mini-stat highlight">
+                <div class="label">Additional needed</div>
+                <div class="value" id="additionalSavingsNeeded">$0</div>
+              </div>
+            </div>
+
+            <div class="savings-gap" id="onTrackStats" style="display:none;">
+              <div class="mini-stat">
+                <div class="label">Goal income</div>
+                <div class="value" id="goalIncomeBox">$0/mo</div>
+              </div>
+              <div class="mini-stat">
+                <div class="label">Projected income</div>
+                <div class="value" id="projectedIncomeBox">$0/mo</div>
+              </div>
+              <div class="mini-stat highlight">
+                <div class="label">Margin above goal</div>
+                <div class="value" id="marginAboveGoalBox">$0/mo</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="details-row">
+            <button onclick="toggleAdvanced()">View Detailed Numbers</button>
+            <button class="secondary" onclick="downloadSnapshotReport()">Download Snapshot Report</button>
+          </div>
+        </div>
+
+        <div class="card purpose-card">
+          <h2>Retirement Purpose Statement</h2>
+          <p class="note">Why are you saving for retirement? This statement will appear in your Retirement Savings Snapshot Report.</p>
+          <textarea id="purposeStatement">My goals for my retirement savings are to honor God through careful stewardship, provide for my family's needs, avoid undue dependence on others in my later years, and enjoy the fruits of my labor by maintaining a comfortable yet reasonable lifestyle in retirement.</textarea>
+        </div>
+      </section>
+    </section>
+
+    <section class="advanced-output" id="advancedOutput">
+      <div class="advanced-grid">
+        <div class="table-card">
+          <h3>Main Details</h3>
+          <p>Supporting numbers behind the main result.</p>
+          <div class="table-wrap">
+            <table class="compact-detail-table">
+              <tbody>
+                <tr><th>Portfolio, today’s dollars</th><td id="portfolioToday">$0</td></tr>
+                <tr><th>Portfolio, future dollars</th><td id="portfolioFuture">$0</td></tr>
+                <tr><th>Annual income, today’s dollars</th><td id="annualWithdrawal">$0</td></tr>
+                <tr><th>Desired annual income</th><td id="desiredAnnualDisplay">$0</td></tr>
+                <tr><th>Desired monthly income</th><td id="desiredMonthlyWithdrawal">$0</td></tr>
+                <tr><th>Required portfolio, today’s dollars</th><td id="requiredPortfolioToday">$0</td></tr>
+                <tr><th>Required portfolio, future dollars</th><td id="requiredPortfolioFuture">$0</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="table-card">
+          <h3>Choosing a Retirement Income Goal</h3>
+          <p>As a starting point, many people plan for retirement income that can support a lifestyle similar to their working years. However, your actual retirement needs may be higher or lower depending on your situation.</p>
+          <p class="note">Some expenses may decrease, such as housing if your home is paid off, food if children are no longer living at home, commuting, or work-related expenses. Other expenses may increase, especially healthcare, travel, home maintenance, family assistance, or giving.</p>
+        </div>
+
+        <div class="table-card wide-card">
+          <h3>Building Your Retirement Portfolio</h3>
+          <p>Accumulation Phase: This chart shows how different long-term investment returns can influence your savings journey before retirement.</p>
+
+          <div class="chart-box">
+            <canvas id="growthChart"></canvas>
+          </div>
+
+          <details class="table-dropdown">
+            <summary>View Growth Table</summary>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Years from now</th><th>Portfolio, future $</th><th>Portfolio, today’s $</th></tr></thead>
+                <tbody id="timelineTable"></tbody>
+              </table>
+            </div>
+          </details>
+        </div>
+
+        <div class="table-card wide-card">
+          <h3>Retirement Portfolio Projection</h3>
+          <p>Distribution Phase: This chart shows how your retirement portfolio may change during the first 20 years of retirement under lower, selected, and higher return assumptions.</p>
+
+          <div class="chart-box">
+            <canvas id="retirementChart"></canvas>
+          </div>
+        </div>
+
+        <div class="table-card wide-card">
+          <h3>Retirement Drawdown Projection</h3>
+          <p>This projection assumes retirement income begins at the amount supported by your selected withdrawal rate. Values are shown in today's dollars and adjusted for inflation to help estimate purchasing power over time.</p>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Retirement year</th><th>Annual withdrawal</th><th>Investment growth</th><th>Ending balance</th></tr></thead>
+              <tbody id="drawdownTable"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="table-card wide-card">
+          <h3>Contribution Sensitivity</h3>
+          <p>Shows 2 contribution levels below your selected amount and 5 above it.</p>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Monthly contribution</th><th>Portfolio, future $</th><th>Portfolio, today’s $</th><th>Monthly income, today’s $</th><th>Annual income, today’s $</th></tr></thead>
+              <tbody id="contributionTable"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="table-card wide-card">
+          <h3>Withdrawal Rate Sensitivity</h3>
+          <p>Shows 2 rates below your selected rate and 3 above it.</p>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Withdrawal rate</th><th>Monthly income, today’s $</th><th>Annual income, today’s $</th></tr></thead>
+              <tbody id="withdrawalTable"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="table-card wide-card">
+          <h3>Return Sensitivity</h3>
+          <p>Shows one return below your selected return, your base return, and one above.</p>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Annual return</th><th>Portfolio, today’s $</th><th>Annual income, today’s $</th><th>Monthly income, today’s $</th></tr></thead>
+              <tbody id="returnTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <div class="tour-backdrop" id="tourBackdrop" aria-hidden="true"></div>
+    <div class="tour-panel" id="tourPanel" role="dialog" aria-modal="true" aria-live="polite" aria-labelledby="tourTitle">
+      <div class="tour-kicker" id="tourKicker">Tutorial</div>
+      <h3 id="tourTitle">Welcome</h3>
+      <p id="tourText"></p>
+      <div class="tour-progress" id="tourProgress"></div>
+      <div class="tour-actions">
+        <div class="left-actions">
+          <button type="button" class="tour-button-ghost" onclick="endTutorial()">Skip</button>
+        </div>
+        <div class="right-actions">
+          <button type="button" class="tour-button-light" id="tourBackBtn" onclick="previousTourStep()">Back</button>
+          <button type="button" id="tourNextBtn" onclick="nextTourStep()">Next</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+<script>
+
+  // ===============================
+  // GUIDED TUTORIAL WALKTHROUGH
+  // ===============================
+  const tutorialSteps = [
+    {
+      stepNumber: 0,
+      title: "Step 0: Welcome",
+      text: "This quick walkthrough will show you what to enter first and how to read the main results. The screen will dim so the current step stands out.",
+      selector: null
+    },
+    {
+      stepNumber: 1,
+      title: "Step 1: Numbers",
+      text: "Enter your starting balance, monthly contribution, current age, and desired retirement age. These personal numbers are grouped together because they are the intuitive starting point.",
+      selector: ".tour-number-inputs"
+    },
+    {
+      stepNumber: 2,
+      title: "Step 2: Annual investment return",
+      text: "Enter your assumed average yearly investment growth. This is only an estimate, so conservative assumptions are usually wiser.",
+      selector: "#annualReturn",
+      highlightClosest: ".input-group"
+    },
+    {
+      stepNumber: 3,
+      title: "Step 3: Desired retirement income",
+      text: "Enter the annual income you want your retirement savings to provide in today's dollars. The calculator also shows the monthly equivalent.",
+      selector: "#desiredAnnualWithdrawal",
+      highlightClosest: ".input-group"
+    },
+    {
+      stepNumber: 4,
+      title: "Step 4: Withdrawal rate",
+      text: "Enter the percentage of your portfolio you plan to withdraw each year. Lower rates are generally more conservative.",
+      selector: "#withdrawalRate",
+      highlightClosest: ".input-group"
+    },
+    {
+      stepNumber: 5,
+      title: "Step 5: Advanced assumptions",
+      text: "Open this area to adjust inflation and table increments. Most users can leave these at the defaults.",
+      selector: "aside details",
+      openDetails: true
+    },
+    {
+      stepNumber: 6,
+      title: "Step 6: View the main results",
+      text: "This final step shows your projected retirement income and whether your current savings plan reaches your income goal.",
+      selector: ".hero-results"
+    }
+  ];
+
+  let currentTutorialIndex = 0;
+  let currentHighlight = null;
+
+  function getTutorialTarget(step) {
+    if (!step || !step.selector) return null;
+    const base = document.querySelector(step.selector);
+    if (!base) return null;
+    return step.highlightClosest ? base.closest(step.highlightClosest) || base : base;
+  }
+
+  function clearTutorialHighlight() {
+    if (currentHighlight) currentHighlight.classList.remove("tour-highlight");
+    currentHighlight = null;
+  }
+
+  function positionTutorialPanel(target) {
+    const panel = document.getElementById("tourPanel");
+    if (!panel) return;
+
+    if (!target) {
+      panel.style.left = "50%";
+      panel.style.top = "96px";
+      panel.style.transform = "translateX(-50%)";
+      return;
+    }
+
+    panel.style.transform = "none";
+    const rect = target.getBoundingClientRect();
+    const panelWidth = Math.min(430, window.innerWidth - 32);
+    const panelHeight = panel.offsetHeight || 220;
+    let left = rect.right + 18;
+    let top = rect.top;
+
+    if (left + panelWidth > window.innerWidth - 16) left = rect.left - panelWidth - 18;
+    if (left < 16) left = Math.min(Math.max(16, rect.left), window.innerWidth - panelWidth - 16);
+    if (top + panelHeight > window.innerHeight - 16) top = window.innerHeight - panelHeight - 16;
+    if (top < 16) top = 16;
+
+    panel.style.left = `${left}px`;
+    panel.style.top = `${top}px`;
+  }
+
+  function showTutorialStep(index) {
+    currentTutorialIndex = Math.max(0, Math.min(index, tutorialSteps.length - 1));
+    const step = tutorialSteps[currentTutorialIndex];
+    const panel = document.getElementById("tourPanel");
+    const title = document.getElementById("tourTitle");
+    const text = document.getElementById("tourText");
+    const progress = document.getElementById("tourProgress");
+    const back = document.getElementById("tourBackBtn");
+    const next = document.getElementById("tourNextBtn");
+
+    document.body.classList.add("tour-active");
+    clearTutorialHighlight();
+
+    if (step.openDetails) {
+      const details = document.querySelector("aside details");
+      if (details) details.open = true;
+    }
+
+    const target = getTutorialTarget(step);
+    if (target) {
+      currentHighlight = target;
+      currentHighlight.classList.add("tour-highlight");
+      target.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
+    }
+
+    title.textContent = step.title;
+    text.textContent = step.text;
+    progress.textContent = `Step ${step.stepNumber} of ${tutorialSteps[tutorialSteps.length - 1].stepNumber}`;
+    back.style.visibility = currentTutorialIndex === 0 ? "hidden" : "visible";
+    next.textContent = currentTutorialIndex === tutorialSteps.length - 1 ? "Finish" : "Next";
+
+    window.setTimeout(() => positionTutorialPanel(target), 280);
+  }
+
+  function startTutorial() {
+    showTutorialStep(0);
+  }
+
+  function endTutorial() {
+    clearTutorialHighlight();
+    document.body.classList.remove("tour-active");
+  }
+
+  function nextTourStep() {
+    if (currentTutorialIndex >= tutorialSteps.length - 1) {
+      endTutorial();
+      return;
+    }
+    showTutorialStep(currentTutorialIndex + 1);
+  }
+
+  function previousTourStep() {
+    showTutorialStep(currentTutorialIndex - 1);
+  }
+
+  window.addEventListener("resize", () => {
+    if (!document.body.classList.contains("tour-active")) return;
+    positionTutorialPanel(currentHighlight);
+  });
+
+  window.addEventListener("keydown", event => {
+    if (!document.body.classList.contains("tour-active")) return;
+    if (event.key === "Escape") endTutorial();
+    if (event.key === "ArrowRight") nextTourStep();
+    if (event.key === "ArrowLeft" && currentTutorialIndex > 0) previousTourStep();
+  });
+
+  const ids = [
+    "startingBalance", "monthlyContribution", "currentAge", "retirementAge", "years", "annualReturn", "inflation",
+    "withdrawalRate", "contributionIncrement", "withdrawalIncrement", "returnIncrement",
+    "desiredAnnualWithdrawal", "purposeStatement"
+  ];
+
+  const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+
+  function val(id) {
+    const raw = String(document.getElementById(id).value || "").replace(/,/g, "");
+    const n = parseFloat(raw);
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  function formatInputNumber(value) {
+    const raw = String(value || "").replace(/[^\d.]/g, "");
+    if (raw === "") return "";
+    const parts = raw.split(".");
+    const whole = parts[0] || "0";
+    const decimal = parts.length > 1 ? "." + parts.slice(1).join("") : "";
+    return Number(whole).toLocaleString("en-US") + decimal;
+  }
+
+  function formatMoneyInput(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.value = formatInputNumber(el.value);
+  }
+
+  function percent(n) {
+    return `${n.toFixed(2).replace(/\.00$/, "")}%`;
+  }
+
+  function futureValue(startingBalance, monthlyContribution, years, annualReturn) {
+    const months = years * 12;
+    const rm = (annualReturn / 100) / 12;
+    if (months <= 0) return startingBalance;
+    if (Math.abs(rm) < 0.000001) return startingBalance + monthlyContribution * months;
+    return startingBalance * Math.pow(1 + rm, months) +
+           monthlyContribution * ((Math.pow(1 + rm, months) - 1) / rm);
+  }
+
+  function todayValue(future, years, inflation) {
+    const i = inflation / 100;
+    if (years <= 0) return future;
+    return future / Math.pow(1 + i, years);
+  }
+
+  function requiredMonthlyContribution(requiredFuturePortfolio, startingBalance, years, annualReturn) {
+    const months = years * 12;
+    const rm = (annualReturn / 100) / 12;
+    if (months <= 0) return 0;
+    const startingFuture = startingBalance * Math.pow(1 + rm, months);
+    const gap = requiredFuturePortfolio - startingFuture;
+    if (gap <= 0) return 0;
+    if (Math.abs(rm) < 0.000001) return gap / months;
+    return gap / ((Math.pow(1 + rm, months) - 1) / rm);
+  }
+// ===============================
+// MATH ENGINE START
+// ===============================
+  function calculateScenario(monthlyContribution, annualReturnOverride = null, yearsOverride = null) {
+    const startingBalance = val("startingBalance");
+    const years = yearsOverride === null ? val("years") : yearsOverride;
+    const annualReturn = annualReturnOverride === null ? val("annualReturn") : annualReturnOverride;
+    const inflation = val("inflation");
+    const withdrawalRate = val("withdrawalRate") / 100;
+    const future = futureValue(startingBalance, monthlyContribution, years, annualReturn);
+    const today = todayValue(future, years, inflation);
+    const annualWithdrawal = today * withdrawalRate;
+    const monthlyWithdrawal = annualWithdrawal / 12;
+    return { future, today, annualWithdrawal, monthlyWithdrawal };
+  }
+
+  function getGoalData() {
+    const desiredAnnual = val("desiredAnnualWithdrawal");
+    const withdrawalRate = val("withdrawalRate") / 100;
+    const years = val("years");
+    const inflation = val("inflation") / 100;
+    const annualReturn = val("annualReturn");
+    const startingBalance = val("startingBalance");
+    const currentMonthly = val("monthlyContribution");
+    const requiredToday = withdrawalRate > 0 ? desiredAnnual / withdrawalRate : 0;
+    const requiredFuture = requiredToday * Math.pow(1 + inflation, years);
+    const requiredMonthly = requiredMonthlyContribution(requiredFuture, startingBalance, years, annualReturn);
+    const additionalNeeded = Math.max(0, requiredMonthly - currentMonthly);
+    const onTrack = additionalNeeded <= 0;
+    return { desiredAnnual, desiredMonthly: desiredAnnual / 12, requiredToday, requiredFuture, requiredMonthly, currentMonthly, additionalNeeded, onTrack };
+  }
+
+  function realReturnRate() {
+    return ((1 + val("annualReturn") / 100) / (1 + val("inflation") / 100)) - 1;
+  }
+
+  function timelineRows() {
+    const maxYears = Math.max(1, val("years"));
+    const rows = [];
+    for (let y = 5; y < maxYears; y += 5) rows.push(y);
+    if (!rows.includes(maxYears)) rows.push(maxYears);
+    return rows.map(year => ({ year, ...calculateScenario(val("monthlyContribution"), null, year) }));
+  }
+
+  function drawdownRows() {
+    const main = calculateScenario(val("monthlyContribution"));
+    const inflation = val("inflation") / 100;
+
+    // Retirement income begins at the amount supported by the selected withdrawal rate
+    // and then increases each year with inflation.
+    let annualWithdrawal = main.annualWithdrawal;
+
+    // Use real return during retirement so the portfolio balance remains in today's-dollar terms.
+    const rr = realReturnRate();
+
+    const checkpoints = [1, 5, 10, 15, 20, 25, 30];
+    const rows = [];
+    let balance = main.today;
+
+    for (let year = 1; year <= 30; year++) {
+      const start = Math.max(0, balance);
+      const withdrawal = Math.min(start, annualWithdrawal);
+      const afterWithdrawal = Math.max(0, start - withdrawal);
+      const growth = afterWithdrawal * rr;
+      const ending = Math.max(0, afterWithdrawal + growth);
+
+      if (checkpoints.includes(year)) {
+        rows.push({
+          year,
+          withdrawal,
+          growth,
+          ending
+        });
+      }
+
+      balance = ending;
+      annualWithdrawal *= (1 + inflation);
+    }
+
+    return rows;
+  }
+
+  function returnRows() {
+    const base = val("annualReturn");
+    const inc = Math.max(0.01, val("returnIncrement"));
+    return [base - inc, base, base + inc].map((returnRate, index) => {
+      const s = calculateScenario(val("monthlyContribution"), returnRate);
+      return { returnRate, index, ...s };
+    });
+  }
+
+  function renderTimelineTable(targetId) {
+    const tbody = document.getElementById(targetId);
+    if (!tbody) return;
+    tbody.innerHTML = "";
+    timelineRows().forEach(row => {
+      const tr = document.createElement("tr");
+      if (row.year === val("years")) tr.classList.add("base-row");
+      tr.innerHTML = `<td>${row.year}</td><td>${money.format(row.future)}</td><td>${money.format(row.today)}</td>`;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function renderDrawdownTable() {
+    const tbody = document.getElementById("drawdownTable");
+    tbody.innerHTML = "";
+    drawdownRows().forEach(row => {
+      const tr = document.createElement("tr");
+      if (row.ending <= 0) tr.classList.add("base-row");
+      tr.innerHTML = `<td>${row.year}</td><td>${money.format(row.withdrawal)}</td><td>${money.format(row.growth)}</td><td>${money.format(row.ending)}</td>`;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function renderContributionTable() {
+    const tbody = document.getElementById("contributionTable");
+    tbody.innerHTML = "";
+    const base = val("monthlyContribution");
+    const inc = Math.max(1, val("contributionIncrement"));
+    [-2, -1, 0, 1, 2, 3, 4, 5].forEach(offset => {
+      const contribution = Math.max(0, base + offset * inc);
+      const s = calculateScenario(contribution);
+      const tr = document.createElement("tr");
+      if (offset === 0) tr.classList.add("base-row");
+      tr.innerHTML = `<td>${money.format(contribution)}</td><td>${money.format(s.future)}</td><td>${money.format(s.today)}</td><td>${money.format(s.monthlyWithdrawal)}</td><td>${money.format(s.annualWithdrawal)}</td>`;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function renderWithdrawalTable(main) {
+    const tbody = document.getElementById("withdrawalTable");
+    tbody.innerHTML = "";
+    const baseRate = val("withdrawalRate");
+    const inc = Math.max(0.01, val("withdrawalIncrement"));
+    [-2, -1, 0, 1, 2, 3].forEach(offset => {
+      const rate = Math.max(0, baseRate + offset * inc);
+      const annualWithdrawal = main.today * (rate / 100);
+      const monthlyWithdrawal = annualWithdrawal / 12;
+      const tr = document.createElement("tr");
+      if (offset === 0) tr.classList.add("base-row");
+      tr.innerHTML = `<td>${percent(rate)}</td><td>${money.format(monthlyWithdrawal)}</td><td>${money.format(annualWithdrawal)}</td>`;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function renderReturnTable() {
+    const tbody = document.getElementById("returnTable");
+    tbody.innerHTML = "";
+    returnRows().forEach(row => {
+      const tr = document.createElement("tr");
+      if (row.index === 1) tr.classList.add("base-row");
+      tr.innerHTML = `<td>${percent(row.returnRate)}</td><td>${money.format(row.today)}</td><td>${money.format(row.annualWithdrawal)}</td><td>${money.format(row.monthlyWithdrawal)}</td>`;
+      tbody.appendChild(tr);
+    });
+  }
+
+
+// ===============================
+// MATH ENGINE END
+// ===============================
+  function pdfCell(label, value, fillColor) {
+    return {
+      stack: [
+        { text: label, fontSize: 8, bold: true, color: "#6B7280", margin: [0, 0, 0, 5] },
+        { text: value, fontSize: 13, bold: true, color: "#1F2937" }
+      ],
+      fillColor: fillColor || "#FFFFFF",
+      margin: [10, 10, 10, 10]
+    };
+  }
+
+  function downloadSnapshotReport() {
+    update();
+    if (typeof pdfMake === "undefined") {
+      alert("PDF generator failed to load. Please check your internet connection or try hosting this page where external scripts are allowed.");
+      return;
+    }
+
+    const main = calculateScenario(val("monthlyContribution"));
+    const goal = getGoalData();
+    const purpose = document.getElementById("purposeStatement").value || "No purpose statement entered.";
+    const displayedMonthlyIncome = goal.onTrack ? goal.desiredMonthly : main.monthlyWithdrawal;
+    const displayedAnnualIncome = goal.onTrack ? goal.desiredAnnual : main.annualWithdrawal;
+    const marginMonthly = Math.max(0, main.monthlyWithdrawal - goal.desiredMonthly);
+    const marginAnnual = Math.max(0, main.annualWithdrawal - goal.desiredAnnual);
+
+    renderGrowthChart();
+    renderRetirementChart();
+
+    const growthChartCanvas = document.getElementById("growthChart");
+    const retirementChartCanvas = document.getElementById("retirementChart");
+    const growthChartImage = growthChartCanvas ? growthChartCanvas.toDataURL("image/png") : null;
+    const retirementChartImage = retirementChartCanvas ? retirementChartCanvas.toDataURL("image/png") : null;
+
+    const timelineBody = [
+      [
+        { text: "Years", bold: true, color: "#FFFFFF", alignment: "left" },
+        { text: "Future Dollars", bold: true, color: "#FFFFFF", alignment: "right" },
+        { text: "Today's Dollars", bold: true, color: "#FFFFFF", alignment: "right" }
+      ],
+      ...timelineRows().map(row => [
+        { text: String(row.year), alignment: "left" },
+        { text: money.format(row.future), alignment: "right" },
+        { text: money.format(row.today), alignment: "right" }
+      ])
+    ];
+
+    const drawdownBody = [
+      [
+        { text: "Year", bold: true, color: "#FFFFFF", alignment: "left" },
+        { text: "Withdrawal", bold: true, color: "#FFFFFF", alignment: "right" },
+        { text: "Growth", bold: true, color: "#FFFFFF", alignment: "right" },
+        { text: "Ending Balance", bold: true, color: "#FFFFFF", alignment: "right" }
+      ],
+      ...drawdownRows().map(row => [
+        { text: String(row.year), alignment: "left" },
+        { text: money.format(row.withdrawal), alignment: "right" },
+        { text: money.format(row.growth), alignment: "right" },
+        { text: money.format(row.ending), alignment: "right" }
+      ])
+    ];
+
+    const monthlySavingsDisplay = goal.onTrack ? "On Track" : money.format(goal.requiredMonthly);
+    const monthlySavingsSub = goal.onTrack ? "" : " per month invested";
+    const savingsMessage = goal.onTrack
+      ? "You are projected to meet or exceed your retirement income goal. Continue saving and investing to maintain financial margin and prepare for future needs."
+      : "To reach your desired retirement income goal, you would need to save and invest approximately this amount each month.";
+
+    const docDefinition = {
+      pageSize: "LETTER",
+      pageMargins: [44, 38, 44, 30],
+      defaultStyle: { font: "Roboto", fontSize: 9.5, color: "#1F2937" },
+      content: [
+        { columns: [
+          { text: "A TRAVELER'S GUIDE TO MONEY", bold: true, color: "#0B4A33", fontSize: 9, characterSpacing: 1.1 },
+          { text: "PAGE 1 OF 3", bold: true, color: "#0B4A33", fontSize: 9, alignment: "right" }
+        ], margin: [0, 0, 0, 10] },
+        { text: "Retirement Savings\nSnapshot Report", fontSize: 32, bold: true, color: "#0B4A33", lineHeight: 0.95, margin: [0, 0, 0, 8] },
+        { text: "A simple projection for retirement income, savings goals, and stewardship planning.", color: "#6B7280", margin: [0, 0, 0, 10] },
+        { text: "Retirement Purpose Statement", bold: true, fontSize: 13, margin: [0, 14, 0, 6] },
+        { text: purpose, fillColor: "#ECFDF5", margin: [12, 10, 12, 10] },
+
+        { text: "Estimated retirement income", bold: true, fontSize: 13, margin: [0, 24, 0, 3] },
+        { columns: [
+          { text: money.format(displayedMonthlyIncome), fontSize: 44, bold: true, color: "#0F5132", width: "auto" },
+          { text: " per month", fontSize: 14, bold: true, color: "#0F5132", margin: [8, 25, 0, 0] }
+        ]},
+        { text: "in today's dollars", color: "#6B7280", margin: [0, 0, 0, 2] },
+        { text: money.format(displayedAnnualIncome) + " per year", bold: true, color: "#0F5132", margin: [0, 0, 0, 5] },
+        { text: (goal.onTrack ? "Goal Achieved: This calculator projects that your retirement income goal is achievable based on the assumptions entered." : "This is the amount your portfolio could likely support in retirement based on the numbers entered."), color: "#6B7280" },
+
+        {
+          table: { widths: ["*"], body: [[{
+            stack: [
+              { text: "MONTHLY SAVINGS STATUS", color: "#B7791F", bold: true, fontSize: 9, characterSpacing: 0.6 },
+              { columns: [
+                { text: monthlySavingsDisplay, fontSize: goal.onTrack ? 32 : 36, bold: true, color: "#0B4A33", width: "auto", margin: [0, 6, 0, 0] },
+                { text: monthlySavingsSub, fontSize: 14, bold: true, color: "#0B4A33", margin: [8, 25, 0, 0] }
+              ]},
+              { text: savingsMessage, color: "#6B7280", margin: [0, 8, 0, 0] }
+            ],
+            fillColor: goal.onTrack ? "#ECFDF5" : "#FFF7ED",
+            margin: [14, 14, 14, 14]
+          }]] },
+          layout: {
+            hLineColor: () => goal.onTrack ? "#BBF7D0" : "#FED7AA",
+            vLineColor: () => goal.onTrack ? "#BBF7D0" : "#FED7AA",
+            hLineWidth: () => 1,
+            vLineWidth: () => 1
+          },
+          margin: [0, 22, 0, 14]
+        },
+
+        { table: { widths: ["*", "*", "*"], body: [[
+          goal.onTrack ? pdfCell("Goal income", money.format(goal.desiredMonthly) + " / mo") : pdfCell("Currently saving", money.format(goal.currentMonthly) + " / mo"),
+          goal.onTrack ? pdfCell("Projected income", money.format(main.monthlyWithdrawal) + " / mo") : pdfCell("Total needed", money.format(goal.requiredMonthly) + " / mo"),
+          goal.onTrack ? pdfCell("Margin above goal", money.format(marginMonthly) + " / mo", "#FFF7ED") : pdfCell("Additional needed", money.format(goal.additionalNeeded) + " / mo", "#FFF7ED")
+        ]] }, layout: { hLineColor: () => "#DBE2EA", vLineColor: () => "#DBE2EA", hLineWidth: () => 1, vLineWidth: () => 1 } },
+
+        { text: "Educational projection only — not financial, legal, tax, or investment advice.", color: "#6B7280", fontSize: 8.5, italics: true, absolutePosition: { x: 44, y: 730 } },
+
+        { text: "", pageBreak: "after" },
+
+        { columns: [
+          { text: "A TRAVELER'S GUIDE TO MONEY", bold: true, color: "#0B4A33", fontSize: 9, characterSpacing: 1.1 },
+          { text: "PAGE 2 OF 3", bold: true, color: "#0B4A33", fontSize: 9, alignment: "right" }
+        ], margin: [0, 0, 0, 10] },
+        { text: "Building Your Retirement Portfolio", fontSize: 28, bold: true, color: "#0B4A33", margin: [0, 0, 0, 6] },
+        { text: "Accumulation Phase: Supporting numbers behind the retirement income estimate. Today's-dollar values are emphasized because they reflect purchasing power.", color: "#6B7280", margin: [0, 0, 0, 12] },
+        growthChartImage ? { image: growthChartImage, width: 500, margin: [0, 0, 0, 12] } : { text: "", margin: [0, 0, 0, 0] },
+
+        { table: { widths: ["*", "*", "*"], body: [[
+          pdfCell("Portfolio at Retirement\nToday's Dollars", money.format(main.today), "#ECFDF5"),
+          pdfCell("Portfolio at Retirement\nFuture Dollars", money.format(main.future)),
+          pdfCell("Withdrawal Rate", percent(val("withdrawalRate")), "#FFF7ED")
+        ]] }, layout: { hLineColor: () => "#DBE2EA", vLineColor: () => "#DBE2EA", hLineWidth: () => 1, vLineWidth: () => 1 }, margin: [0, 0, 0, 10] },
+
+        { text: "Key Assumptions", bold: true, fontSize: 12, margin: [0, 8, 0, 5] },
+        { table: { widths: ["*", "*", "*"], body: [[
+          pdfCell("Starting Balance", money.format(val("startingBalance"))),
+          pdfCell("Monthly Contribution", money.format(val("monthlyContribution"))),
+          pdfCell("Years Until Retirement", String(val("years")))
+        ], [
+          pdfCell("Annual Return", percent(val("annualReturn"))),
+          pdfCell("Inflation", percent(val("inflation"))),
+          pdfCell("Desired Annual Income", money.format(goal.desiredAnnual))
+        ]] }, layout: { hLineColor: () => "#DBE2EA", vLineColor: () => "#DBE2EA", hLineWidth: () => 1, vLineWidth: () => 1 } },
+
+        { text: "Portfolio Growth Timeline", bold: true, fontSize: 12, margin: [0, 10, 0, 5] },
+        { table: { headerRows: 1, widths: ["*", "*", "*"], body: timelineBody }, layout: {
+          fillColor: (r) => r === 0 ? "#0B4A33" : null,
+          hLineColor: () => "#E5E7EB", vLineColor: () => "#E5E7EB", hLineWidth: () => 0.5, vLineWidth: () => 0.5
+        }},
+
+        { text: "", pageBreak: "after" },
+
+        { columns: [
+          { text: "A TRAVELER'S GUIDE TO MONEY", bold: true, color: "#0B4A33", fontSize: 9, characterSpacing: 1.1 },
+          { text: "PAGE 3 OF 3", bold: true, color: "#0B4A33", fontSize: 9, alignment: "right" }
+        ], margin: [0, 0, 0, 10] },
+        { text: "Retirement Portfolio Projection", fontSize: 28, bold: true, color: "#0B4A33", margin: [0, 0, 0, 6] },
+        { text: "Distribution Phase: This chart shows how your retirement portfolio may change during the first 20 years of retirement under lower, selected, and higher return assumptions.", color: "#6B7280", margin: [0, 0, 0, 12] },
+        retirementChartImage ? { image: retirementChartImage, width: 500, margin: [0, 0, 0, 12] } : { text: "", margin: [0, 0, 0, 0] },
+
+        { text: "Retirement Drawdown Projection", bold: true, fontSize: 12, margin: [0, 10, 0, 5] },
+        { text: "This projection assumes retirement income begins at the amount supported by your selected withdrawal rate. Values are shown in today's dollars and adjusted for inflation to help estimate purchasing power over time.", color: "#6B7280", margin: [0,0,0,4] },
+        { table: { headerRows: 1, widths: ["*", "*", "*", "*"], body: drawdownBody }, layout: {
+          fillColor: (r) => r === 0 ? "#0B4A33" : null,
+          hLineColor: () => "#E5E7EB", vLineColor: () => "#E5E7EB", hLineWidth: () => 0.5, vLineWidth: () => 0.5
+        }},
+
+        { text: "Note: This calculator assumes monthly contributions and monthly compounding. Actual investment results will vary, but over long periods the difference is typically small.", color: "#6B7280", fontSize: 8.2, italics: true, margin: [0, 10, 0, 0] }
+      ]
+    };
+
+    pdfMake.createPdf(docDefinition).download("Retirement-Savings-Snapshot-Report.pdf");
+  }
+
+
+
+
+
+
+  let growthChartInstance = null;
+  let retirementChartInstance = null;
+
+  function accumulationChartRows() {
+    const maxYears = Math.max(1, val("years"));
+    const baseReturn = val("annualReturn");
+    const inc = Math.max(0.01, val("returnIncrement"));
+    const lowerReturn = baseReturn - inc;
+    const higherReturn = baseReturn + inc;
+    const monthlyContribution = val("monthlyContribution");
+
+    const milestones = [0];
+    for (let y = 5; y < maxYears; y += 5) milestones.push(y);
+    if (!milestones.includes(maxYears)) milestones.push(maxYears);
+
+    const rows = milestones.map(year => {
+      const lower = calculateScenario(monthlyContribution, lowerReturn, year);
+      const base = calculateScenario(monthlyContribution, baseReturn, year);
+      const higher = calculateScenario(monthlyContribution, higherReturn, year);
+      return {
+        year,
+        label: year === 0 ? "Today" : (year === maxYears ? "Retirement" : String(year)),
+        lower: lower.today,
+        base: base.today,
+        higher: higher.today
+      };
+    });
+
+    return { rows, lowerReturn, baseReturn, higherReturn };
+  }
+
+  function retirementProjectionRows() {
+    const baseReturn = val("annualReturn");
+    const inc = Math.max(0.01, val("returnIncrement"));
+    const lowerReturn = baseReturn - inc;
+    const higherReturn = baseReturn + inc;
+    const monthlyContribution = val("monthlyContribution");
+    const withdrawalRate = val("withdrawalRate") / 100;
+    const checkpoints = [0, 5, 10, 15, 20];
+
+    function scenarioRows(returnRate) {
+      const startScenario = calculateScenario(monthlyContribution, returnRate);
+      let balance = Math.max(0, startScenario.today);
+      const annualWithdrawal = Math.max(0, startScenario.today * withdrawalRate);
+      const realReturn = ((1 + returnRate / 100) / (1 + val("inflation") / 100)) - 1;
+      const result = [];
+
+      for (let year = 0; year <= 20; year++) {
+        if (checkpoints.includes(year)) {
+          result.push({ year, balance });
+        }
+
+        if (year < 20) {
+          const withdrawal = Math.min(balance, annualWithdrawal);
+          const afterWithdrawal = Math.max(0, balance - withdrawal);
+          const growth = afterWithdrawal * realReturn;
+          balance = Math.max(0, afterWithdrawal + growth);
+        }
+      }
+
+      return result;
+    }
+
+    const lowerRows = scenarioRows(lowerReturn);
+    const baseRows = scenarioRows(baseReturn);
+    const higherRows = scenarioRows(higherReturn);
+
+    const rows = checkpoints.map((year, i) => ({
+      year,
+      label: year === 0 ? "Retirement" : String(year),
+      lower: lowerRows[i].balance,
+      base: baseRows[i].balance,
+      higher: higherRows[i].balance
+    }));
+
+    return { rows, lowerReturn, baseReturn, higherReturn };
+  }
+
+  function makeLineChart(canvasId, chartInstance, chartRowsData, xAxisTitle) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas || typeof Chart === "undefined") return chartInstance;
+
+    const { rows, lowerReturn, baseReturn, higherReturn } = chartRowsData;
+    const labels = rows.map(row => row.label);
+
+    const chartData = {
+      labels,
+      datasets: [
+        {
+          label: `Higher (${percent(higherReturn)})`,
+          data: rows.map(row => row.higher),
+          borderColor: "#B7791F",
+          backgroundColor: "rgba(183, 121, 31, 0.04)",
+          borderWidth: 2,
+          pointRadius: 3,
+          pointHoverRadius: 5,
+          tension: 0.28,
+          fill: false
+        },
+        {
+          label: `Selected (${percent(baseReturn)})`,
+          data: rows.map(row => row.base),
+          borderColor: "#0B4A33",
+          borderWidth: 6,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          tension: 0.28,
+          fill: false
+        },
+        {
+          label: `Lower (${percent(lowerReturn)})`,
+          data: rows.map(row => row.lower),
+          borderColor: "#6B7280",
+          backgroundColor: "rgba(107, 114, 128, 0.04)",
+          borderWidth: 2,
+          pointRadius: 3,
+          pointHoverRadius: 5,
+          tension: 0.28,
+          fill: false
+        }
+      ]
+    };
+
+    const chartOptions = {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: {
+        mode: "index",
+        intersect: false
+      },
+      plugins: {
+        legend: {
+          position: "bottom",
+          labels: {
+            usePointStyle: true,
+            pointStyle: "line",
+            boxWidth: 34,
+            boxHeight: 8,
+            color: "#374151",
+            font: {
+              weight: "bold"
+            }
+          }
+        },
+        tooltip: {
+          callbacks: {
+            title(items) {
+              return items && items.length ? items[0].label : "";
+            },
+            label(context) {
+              return `${context.dataset.label}: ${money.format(context.parsed.y)}`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          title: {
+            display: true,
+            text: xAxisTitle,
+            color: "#6B7280",
+            font: {
+              weight: "bold"
+            }
+          },
+          ticks: {
+            color: "#6B7280",
+            font: {
+              weight: "bold"
+            },
+            maxRotation: 0,
+            autoSkip: true
+          },
+          grid: {
+            display: false
+          }
+        },
+        y: {
+          title: {
+            display: true,
+            text: "Portfolio value in today's dollars",
+            color: "#6B7280",
+            font: {
+              weight: "bold"
+            }
+          },
+          ticks: {
+            color: "#6B7280",
+            callback(value) {
+              const abs = Math.abs(value);
+              if (abs >= 1000000) return "$" + (value / 1000000).toFixed(abs >= 10000000 ? 0 : 1).replace(/\.0$/, "") + "M";
+              if (abs >= 1000) return "$" + (value / 1000).toFixed(abs >= 100000 ? 0 : 1).replace(/\.0$/, "") + "K";
+              return money.format(value);
+            },
+            maxTicksLimit: 6
+          },
+          grid: {
+            color: "#E5E7EB"
+          }
+        }
+      }
+    };
+
+    if (chartInstance) {
+      chartInstance.data = chartData;
+      chartInstance.options = chartOptions;
+      chartInstance.update();
+      return chartInstance;
+    }
+
+    return new Chart(canvas, {
+      type: "line",
+      data: chartData,
+      options: chartOptions
+    });
+  }
+
+  function renderGrowthChart() {
+    growthChartInstance = makeLineChart("growthChart", growthChartInstance, accumulationChartRows(), "Years on your journey");
+  }
+
+  function renderRetirementChart() {
+    retirementChartInstance = makeLineChart("retirementChart", retirementChartInstance, retirementProjectionRows(), "Years in retirement");
+  }
+
+
+
+  function updateYearsFromAges() {
+    const currentAge = val("currentAge");
+    const retirementAge = val("retirementAge");
+    const yearsInput = document.getElementById("years");
+    const display = document.getElementById("yearsUntilRetirementDisplay");
+
+    let years = 0;
+    if (currentAge > 0 && retirementAge > currentAge) {
+      years = retirementAge - currentAge;
+    }
+
+    if (yearsInput) yearsInput.value = years ? String(years) : "";
+    if (display) display.textContent = years ? `${years} year${years === 1 ? "" : "s"}` : "0 years";
+  }
+
+  function update() {
+    updateYearsFromAges();
+    const main = calculateScenario(val("monthlyContribution"));
+    const goal = getGoalData();
+
+    const cappedMonthlyIncome = goal.onTrack ? goal.desiredMonthly : main.monthlyWithdrawal;
+    const cappedAnnualIncome = goal.onTrack ? goal.desiredAnnual : main.annualWithdrawal;
+    const marginMonthly = Math.max(0, main.monthlyWithdrawal - goal.desiredMonthly);
+    const marginAnnual = Math.max(0, main.annualWithdrawal - goal.desiredAnnual);
+
+    renderGrowthChart();
+    renderRetirementChart();
+
+    const growthChartCanvas = document.getElementById("growthChart");
+    const retirementChartCanvas = document.getElementById("retirementChart");
+    const growthChartImage = growthChartCanvas ? growthChartCanvas.toDataURL("image/png") : null;
+    const retirementChartImage = retirementChartCanvas ? retirementChartCanvas.toDataURL("image/png") : null;
+
+    document.getElementById("desiredMonthlyIncomeInput").textContent = money.format(goal.desiredMonthly) + "/mo";
+    document.getElementById("monthlyWithdrawal").textContent = money.format(cappedMonthlyIncome);
+
+    if (goal.onTrack) {
+      document.getElementById("goalAchievedNote").style.display = "block";
+      document.getElementById("incomeSentence").innerHTML =
+        `This calculator projects that your retirement income goal is achievable based on the assumptions entered. Your projected income is approximately <strong>${money.format(main.monthlyWithdrawal)}</strong> per month, giving you about <strong>${money.format(marginMonthly)}</strong> per month of margin.`;
+    } else {
+      document.getElementById("goalAchievedNote").style.display = "none";
+      document.getElementById("incomeSentence").innerHTML =
+        `This is the amount your portfolio could likely support in retirement based on the numbers entered. It equals approximately <strong>${money.format(main.annualWithdrawal)}</strong> per year in today’s dollars.`;
+    }
+
+    document.getElementById("currentMonthlyContribution").textContent = money.format(goal.currentMonthly);
+    document.getElementById("totalSavingsNeeded").textContent = money.format(goal.requiredMonthly);
+    document.getElementById("additionalSavingsNeeded").textContent = money.format(goal.additionalNeeded);
+
+    document.getElementById("goalIncomeBox").textContent = money.format(goal.desiredMonthly) + "/mo";
+    document.getElementById("projectedIncomeBox").textContent = money.format(main.monthlyWithdrawal) + "/mo";
+    document.getElementById("marginAboveGoalBox").textContent = money.format(marginMonthly) + "/mo";
+
+    if (goal.onTrack) {
+      document.getElementById("goalEyebrow").textContent = "Goal status";
+      document.getElementById("goalNumberWrap").style.display = "none";
+      document.getElementById("goalSuccessWrap").style.display = "block";
+      document.getElementById("behindGoalStats").style.display = "none";
+      document.getElementById("onTrackStats").style.display = "grid";
+      document.getElementById("goalSentence").innerHTML = "";
+    } else {
+      document.getElementById("goalEyebrow").textContent = "Savings needed to reach your goal";
+      document.getElementById("goalNumberWrap").style.display = "block";
+      document.getElementById("goalSuccessWrap").style.display = "none";
+      document.getElementById("behindGoalStats").style.display = "grid";
+      document.getElementById("onTrackStats").style.display = "none";
+      document.getElementById("requiredMonthlyContribution").textContent = money.format(goal.requiredMonthly);
+      document.getElementById("goalSentence").innerHTML =
+        `To reach your goal of <strong>${money.format(goal.desiredAnnual)}</strong> per year, you would need to increase your savings by approximately <strong>${money.format(goal.additionalNeeded)}</strong> per month.`;
+    }
+
+    document.getElementById("portfolioToday").textContent = money.format(main.today);
+    document.getElementById("portfolioFuture").textContent = money.format(main.future);
+    document.getElementById("annualWithdrawal").textContent = money.format(main.annualWithdrawal);
+    document.getElementById("desiredAnnualDisplay").textContent = money.format(goal.desiredAnnual);
+    document.getElementById("desiredMonthlyWithdrawal").textContent = money.format(goal.desiredMonthly);
+    document.getElementById("requiredPortfolioToday").textContent = money.format(goal.requiredToday);
+    document.getElementById("requiredPortfolioFuture").textContent = money.format(goal.requiredFuture);
+
+    renderGrowthChart();
+    renderRetirementChart();
+    renderTimelineTable("timelineTable");
+    renderDrawdownTable();
+    renderContributionTable();
+    renderWithdrawalTable(main);
+    renderReturnTable();
+  }
+
+  function toggleAdvanced() {
+    document.getElementById("advancedOutput").classList.toggle("open");
+    if (document.getElementById("advancedOutput").classList.contains("open")) {
+      document.getElementById("advancedOutput").scrollIntoView({ behavior: "smooth" });
+    }
+  }
+
+  const moneyInputIds = ["startingBalance", "monthlyContribution", "desiredAnnualWithdrawal", "contributionIncrement"];
+
+  moneyInputIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    formatMoneyInput(id);
+    el.addEventListener("input", () => {
+      const cursorFromEnd = el.value.length - el.selectionStart;
+      formatMoneyInput(id);
+      const newPos = Math.max(0, el.value.length - cursorFromEnd);
+      el.setSelectionRange(newPos, newPos);
+      update();
+    });
+  });
+
+  ids.forEach(id => {
+    if (!moneyInputIds.includes(id)) {
+      document.getElementById(id).addEventListener("input", update);
+    }
+  });
+
+  update();
+  window.addEventListener("load", () => {
+    window.setTimeout(startTutorial, 300);
+  });
+</script>
+</body>
+</html>
