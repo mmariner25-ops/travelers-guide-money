@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>College Cash Flow Planner V3</title>
+<style>
+:root{
+  --bg:#f6f3ec;--paper:#fffdf7;--ink:#233126;--muted:#607064;--green:#2f6b4f;--green2:#e2f0e7;
+  --gold:#c7943d;--red:#b94b3f;--line:#ded6c8;--shadow:0 20px 50px rgba(35,49,38,.12);--r:22px;
+}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(circle at top left,#fff8e6 0,var(--bg) 38%,#efe9dc 100%);color:var(--ink);font-family:ui-serif,Georgia,Cambria,"Times New Roman",serif;line-height:1.45}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 18px 60px}
+header{background:linear-gradient(135deg,#244a37,#357356);color:white;border-radius:30px;padding:34px;box-shadow:var(--shadow);overflow:hidden;position:relative}
+header:after{content:"";position:absolute;right:-80px;top:-120px;width:280px;height:280px;background:rgba(255,255,255,.11);border-radius:50%}
+.eyebrow{text-transform:uppercase;letter-spacing:.18em;font-size:.78rem;opacity:.85}
+h1{margin:8px 0;font-size:clamp(2.1rem,5vw,4.2rem);line-height:.95}
+.subtitle{max-width:780px;font-size:1.12rem;color:rgba(255,255,255,.88)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:20px;align-items:start}
+.stack{display:grid;grid-template-columns:1fr;gap:20px;margin-top:20px}
+.card{background:rgba(255,253,247,.96);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:22px}
+.card h2{margin:0 0 6px;font-size:1.45rem}.card p.help{margin:0 0 18px;color:var(--muted);font-size:.98rem}
+.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.field.full{grid-column:1/-1}
+label{display:block;font-weight:700;font-size:.92rem;margin-bottom:5px}
+input,select{width:100%;border:1px solid #cfc6b7;background:white;border-radius:13px;padding:11px 12px;font:inherit;color:var(--ink);outline:none}
+input:focus,select:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(47,107,79,.14)}
+input[readonly]{background:#f4efe6;color:var(--muted)}
+.note{background:var(--green2);border:1px solid #cce4d5;border-radius:18px;padding:15px;color:#254a36;margin-top:14px}.small{color:var(--muted);font-size:.86rem}
+.hero{background:linear-gradient(135deg,#214b36,#397657);color:white;border-radius:30px;padding:34px;box-shadow:var(--shadow);text-align:center}
+.hero .kicker{letter-spacing:.12em;text-transform:uppercase;opacity:.82;font-size:.78rem;font-weight:800}
+.hero .number{font-size:clamp(4rem,10vw,7.2rem);font-weight:900;line-height:.9;margin:12px 0 8px}
+.hero .sub{color:rgba(255,255,255,.88);font-size:1.12rem}
+.hero-tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:18px auto 0;max-width:520px}
+.hero-tile{background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.18);border-radius:16px;padding:12px}
+.hero-tile b{display:block;font-size:1.35rem;line-height:1.1}.hero-tile span{font-size:.82rem;opacity:.84}
+.housing-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.housing-card{border:1px solid var(--line);border-radius:18px;background:#fffaf0;padding:14px}
+.housing-card.active{outline:3px solid rgba(47,107,79,.22);border-color:var(--green);background:#f6fff8}
+.housing-card h3{margin:0 0 4px;font-size:1.05rem}.mini-fields{display:grid;gap:9px;margin-top:10px}
+.mini-fields label{font-size:.82rem;margin-bottom:3px}.mini-fields input{border-radius:11px;padding:9px 10px}
+.scenario-total{margin-top:10px;font-weight:900}button.use-btn{width:100%;margin-top:10px;border:0;border-radius:999px;padding:10px 12px;background:var(--green);color:#fff;font:inherit;font-weight:800;cursor:pointer}
+button.use-btn.secondary{background:#d7cdbd;color:var(--ink)}
+.summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:14px}
+.summary-card{background:#fffdf7;border:1px solid var(--line);border-radius:16px;padding:12px;min-width:0}
+.summary-card .top{color:var(--muted);font-size:.72rem;font-weight:900;text-transform:uppercase;letter-spacing:.05em}
+.summary-card .amount{font-size:1.35rem;font-weight:900;line-height:1.1;margin-top:5px;overflow-wrap:anywhere}
+.positive{color:var(--green)}.negative{color:var(--red)}
+.pass{background:#ecf8ef;border-color:#cdebd5}.fail{background:#fff0ed;border-color:#edc6c0}
+table{width:100%;border-collapse:collapse;overflow:hidden;border-radius:16px}th,td{text-align:right;padding:11px 10px;border-bottom:1px solid var(--line)}th:first-child,td:first-child{text-align:left}th{color:var(--muted);font-size:.85rem;text-transform:uppercase;letter-spacing:.08em}tr:last-child td{border-bottom:0}
+.blocks{display:inline-block;min-width:72px;text-align:center;letter-spacing:1px;font-weight:900;color:var(--green)}.blocks .empty{color:#cfc8ba}.workload{white-space:nowrap}
+details{border:1px solid var(--line);border-radius:var(--r);background:rgba(255,253,247,.96);box-shadow:var(--shadow);padding:0;overflow:hidden}
+summary{cursor:pointer;padding:22px;font-size:1.45rem;font-weight:900;background:#fffaf0}
+.details-inner{padding:0 22px 22px}.adv-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:16px}
+.subcard{border:1px solid var(--line);border-radius:18px;padding:16px;background:white}
+.barrow{margin:13px 0}.barlabel{display:flex;justify-content:space-between;gap:10px;font-weight:800;margin-bottom:5px}.track{height:17px;background:#ebe3d7;border-radius:999px;overflow:hidden;border:1px solid #d8cfbf}.fill{height:100%;width:0%;background:var(--green);border-radius:999px}.fill.gold{background:var(--gold)}.fill.red{background:var(--red)}
+.scenario{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;border-top:1px solid var(--line);padding:13px 0}.scenario:first-of-type{border-top:0}.scenario input[type=checkbox]{width:22px;height:22px;accent-color:var(--green)}
+.pill{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:#fffaf0;color:var(--ink);border-radius:999px;padding:7px 11px;font-size:.86rem;margin:6px 6px 0 0}
+.footer{text-align:center;margin-top:20px;color:var(--muted);font-size:.9rem}
+@media(max-width:900px){.grid2,.housing-grid,.summary,.adv-grid{grid-template-columns:1fr}.fields{grid-template-columns:1fr}.hero-tiles{grid-template-columns:1fr}header{padding:26px}}
+
+.reducer-result{background:#f6fff8;border:1px solid #cce4d5;border-radius:16px;padding:12px;margin-top:10px}
+.reducer-line{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:7px 0}
+.reducer-line b{font-size:1.08rem}
+.arrow{color:var(--green);font-weight:900;text-align:center;font-size:1.4rem;line-height:1}
+details.mini{box-shadow:none;border-radius:14px;margin-top:10px;background:#fffaf0}
+details.mini summary{font-size:.98rem;padding:12px 14px;background:#fffaf0}
+details.mini .details-inner{padding:0 14px 14px}
+.tiny-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@media(max-width:900px){.tiny-grid{grid-template-columns:1fr}}
+
+
+.pdf-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.pdf-btn{border:0;border-radius:999px;padding:11px 15px;background:var(--green);color:#fff;font:inherit;font-weight:900;cursor:pointer}
+.pdf-btn.secondary{background:#d7cdbd;color:var(--ink)}
+
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+ <div class="eyebrow">A Traveler’s Guide Money Tool</div>
+ <h1>College Cash Flow Planner</h1>
+ <div class="subtitle">Answer the main question first: how much do I need to earn per month to cash flow college without student loan debt?</div>
+</header>
+
+<div class="grid2">
+<section class="card">
+ <h2>1. Estimate Your College Costs</h2>
+ <p class="help">Estimate one school year. Use annual numbers for school costs.</p>
+ <div class="fields">
+  <div class="field"><label>Tuition & fees / yr</label><input id="tuition" type="number" value="12000"></div>
+  <div class="field"><label>Books & supplies / yr</label><input id="books" type="number" value="900"></div>
+  <div class="field"><label>Other school expenses / yr</label><input id="other" type="number" value="1000"></div>
+  <div class="field"><label>Selected living cost / yr</label><input id="livingCost" type="number" value="10700" readonly></div>
+  <div class="field"><label>Degree length (years)</label><input id="degreeYears" type="number" value="4" min="1" max="8" step="1"></div>
+ </div>
+</section>
+
+<section class="card">
+ <h2>2. Help Already Available</h2>
+ <p class="help">Before continuing, check every source of grants, scholarships, student aid, and assistance.</p>
+ <div class="note"><b>Student aid reminder:</b> Check all sources of grants, scholarships, and student aid before continuing. Include family gifts, church assistance, employer tuition assistance, and other expected support.</div>
+ <p class="help" style="margin-top:14px">Enter the total aid and assistance you expect to receive below.</p>
+ <div class="fields">
+  <div class="field"><label>Scholarships & grants</label><input id="scholarships" type="number" value="3000"></div>
+  <div class="field"><label>Family gifts & other assistance</label><input id="family" type="number" value="2000"></div>
+  <div class="field"><label>Current savings available</label><input id="savings" type="number" value="1000"></div>
+  <div class="field"><label>Estimated tax/withholding</label><select id="taxRate"><option value="0">0% — gross wages</option><option value="0.08">8%</option><option value="0.12" selected>12%</option><option value="0.15">15%</option><option value="0.20">20%</option></select></div>
+ </div>
+</section>
+</div>
+
+<div class="stack">
+<section class="card">
+ <h2>Choose Where You'll Live</h2>
+ <p class="help">Enter monthly amounts for regular living costs. For on-campus Room & Board, enter the per-semester amount; the planner doubles it for the annual estimate.</p>
+ <div class="housing-grid">
+  <div class="housing-card active" id="cardOnCampus">
+   <h3>Live on Campus</h3><div class="small">Convenient, but often more expensive.</div>
+   <div class="mini-fields">
+    <div><label>Room & Board / semester</label><input id="onHousing" type="number" value="4750"><div class="small">Annual: <b id="onHousingAnnual">$0/yr</b></div></div>
+    <div><label>Transportation / month</label><input id="onTransport" type="number" value="100"><div class="small">Annual: <b id="onTransportAnnual">$0/yr</b></div></div>
+   </div><div class="scenario-total" id="onTotal">$0/yr</div><button class="use-btn" data-scenario="onCampus">Current Choice</button>
+  </div>
+  <div class="housing-card" id="cardOffCampus">
+   <h3>Rent Off Campus</h3><div class="small">Can save money, especially with roommates.</div>
+   <div class="mini-fields">
+    <div><label>Rent / month</label><input id="offRent" type="number" value="600"><div class="small">Annual: <b id="offRentAnnual">$0/yr</b></div></div>
+    <div><label>Utilities / month</label><input id="offUtilities" type="number" value="100"><div class="small">Annual: <b id="offUtilitiesAnnual">$0/yr</b></div></div>
+    <div><label>Food / groceries / month</label><input id="offFood" type="number" value="300"><div class="small">Annual: <b id="offFoodAnnual">$0/yr</b></div></div>
+    <div><label>Transportation / month</label><input id="offTransport" type="number" value="150"><div class="small">Annual: <b id="offTransportAnnual">$0/yr</b></div></div>
+   </div><div class="scenario-total" id="offTotal">$0/yr</div><button class="use-btn secondary" data-scenario="offCampus">Choose This Option</button>
+  </div>
+  <div class="housing-card" id="cardHome">
+   <h3>Live at Home</h3><div class="small">Usually the least expensive option.</div>
+   <div class="mini-fields">
+    <div><label>Contribution / month</label><input id="homeOther" type="number" value="40"><div class="small">Annual: <b id="homeOtherAnnual">$0/yr</b></div></div>
+    <div><label>Transportation / month</label><input id="homeTransport" type="number" value="150"><div class="small">Annual: <b id="homeTransportAnnual">$0/yr</b></div></div>
+    <div><label>Food / month</label><input id="homeFood" type="number" value="100"><div class="small">Annual: <b id="homeFoodAnnual">$0/yr</b></div></div>
+   </div><div class="scenario-total" id="homeTotal">$0/yr</div><button class="use-btn secondary" data-scenario="home">Choose This Option</button>
+  </div>
+ </div>
+ <div class="note" id="housingInsight"></div>
+</section>
+
+<section class="hero">
+ <div class="kicker">3. Your Monthly Income Goal</div>
+ <div class="number" id="monthlyNeed">$0</div>
+ <div class="sub">needed /mo to cash flow college this yr.</div>
+ <div class="hero-tiles">
+  <div class="hero-tile"><b id="weeklyNeed">$0</b><span>/week</span></div>
+  <div class="hero-tile"><b id="annualNeed">$0</b><span>/yr goal</span></div>
+ </div>
+</section>
+
+<section class="card">
+ <h2>4. Can This Job Pay for College?</h2>
+ <p class="help">Enter a possible regular job and schedule. If you work extra hours during the summer, enter only the additional summer money saved beyond this normal work plan.</p>
+ <div class="fields">
+  <div class="field"><label>Hourly wage</label><input id="wage" type="number" value="14" step="0.25"></div>
+  <div class="field"><label>Hours per week</label><input id="hours" type="number" value="32" step="1"></div>
+  <div class="field"><label>Weeks worked per year</label><input id="weeks" type="number" value="46"></div>
+  <div class="field"><label>Extra summer earnings saved</label><input id="summer" type="number" value="0"><div class="small">Only count extra summer wages saved above your normal year-round work schedule.</div></div>
+ </div>
+ <div class="summary" id="jobSummary"></div>
+ <div class="result-note note" id="jobNote"></div>
+</section>
+
+<section class="card">
+ <h2>5. Wage Comparison</h2>
+ <p class="help">The table centers on your selected wage and shows nearby $1 wage options.</p>
+ <table>
+  <thead><tr><th>Hourly wage</th><th>Hours/week needed</th><th>Workload</th></tr></thead>
+  <tbody id="wageTable"></tbody>
+ </table>
+</section>
+
+<details>
+ <summary>Reduce Your Workload During School</summary>
+ <div class="details-inner">
+  <p class="help" style="margin-top:16px">Explore practical strategies to lower the number of hours you'll need to work while in school. The goal isn't to avoid work, but to create a schedule that's realistic, sustainable, and compatible with academic success.</p>
+  <div class="adv-grid">
+
+   <div class="subcard">
+    <h3>Save Before College</h3>
+    <p class="small">Every dollar saved before college is one less dollar you need to earn while taking classes.</p>
+    <label>Savings available when college starts</label><input id="advancedSavings" type="number" value="1000" step="100">
+    <details class="mini">
+      <summary>Estimate My Savings Before College</summary>
+      <div class="details-inner">
+        <div class="tiny-grid">
+          <div><label>Current savings</label><input id="preCurrentSavings" type="number" value="1000" step="100"></div>
+          <div><label>Monthly savings</label><input id="preMonthlySavings" type="number" value="500" step="50"></div>
+          <div><label>Months until school</label><input id="preMonths" type="number" value="14" step="1"></div>
+        </div>
+        <div class="note" id="preSavingsResult"></div>
+        <button class="use-btn" id="usePreSavings" type="button">Use this amount in my plan</button>
+      </div>
+    </details>
+    <div class="reducer-result" id="saveBeforeResult"></div>
+   </div>
+
+   <div class="subcard">
+    <h3>Earn More Scholarships</h3>
+    <p class="small">Set a scholarship goal and see how much it lowers your work schedule.</p>
+    <label>Additional scholarships goal / yr</label><input id="scholarshipGoal" type="number" value="2000" step="100">
+    <div class="reducer-result" id="scholarshipResult"></div>
+   </div>
+
+   <div class="subcard">
+    <h3>Family & Other Assistance</h3>
+    <p class="small">Additional help from parents, grandparents, church, employer, or gifts.</p>
+    <label>Additional help / month</label><input id="familyMonthly" type="number" value="100" step="25">
+    <div class="reducer-result" id="familyResult"></div>
+   </div>
+
+
+   <div class="subcard">
+    <h3>Combined Workload Reducer</h3>
+    <p class="small">See how savings before college, additional scholarships, and family or other monthly help work together.</p>
+    <div class="reducer-result" id="compoundReducerResult"></div>
+   </div>
+
+   <div class="subcard">
+    <h3>Increase Your Hourly Wage</h3>
+    <p class="small">See how a better-paying job changes required hours.</p>
+    <label>Target hourly wage</label><input id="targetWage" type="number" value="16" step="0.25">
+    <div class="reducer-result" id="wageIncreaseResult"></div>
+   </div>
+
+   <div class="subcard">
+    <h3>Target Work Schedule</h3>
+    <p class="small">What wage is needed if you want to stay under a selected number of hours?</p>
+    <label>Max hours you want to work/week</label><input id="maxHours" type="number" value="20" step="1">
+    <div class="note" id="targetSchedule"></div>
+   </div>
+
+   <div class="subcard">
+    <h3>Wage Cap Planner</h3>
+    <p class="small">If your wage and hours are capped, how much must come from elsewhere?</p>
+    <label>Highest realistic hourly wage</label><input id="wageCap" type="number" value="14" step="0.25">
+    <div class="note" id="wageCapResult"></div>
+   </div>
+
+   <div class="subcard">
+    <h3>Coverage Gauge</h3>
+    <div id="bars"></div>
+   </div>
+
+   <div class="subcard">
+    <h3>Scenario Builder</h3>
+    <p class="small">Try common decisions that can lower the monthly income goal.</p>
+    <div class="scenario"><div><b>Community college first</b><div class="small">Reduce tuition by 40% for this year.</div></div><input id="community" type="checkbox"></div>
+    <div class="scenario"><div><b>Extra scholarship</b><div class="small">Add $2,000 in scholarship help.</div></div><input id="extraScholarship" type="checkbox"></div>
+    <div class="scenario"><div><b>Summer savings push</b><div class="small">Add $5,000 saved before school starts.</div></div><input id="summerScenario" type="checkbox"></div>
+   </div>
+
+
+   <div class="subcard" style="grid-column:1/-1">
+    <h3>PDF Summary</h3>
+    <p class="small">Create a clean one-page summary of the plan. Use your browser’s print window to save it as a PDF.</p>
+    <div class="pdf-actions">
+      <button class="pdf-btn" id="printSummary" type="button">Create PDF Summary</button>
+    </div>
+   </div>
+
+
+   <div class="subcard" style="grid-column:1/-1">
+    <h3>Personal Recommendations</h3>
+    <div id="recommendations"></div>
+   </div>
+  </div>
+ </div>
+</details>
+</div>
+
+<div class="footer"><b>Planning Note:</b> Income and costs are averaged over 12 months for planning purposes. Your college may bill by semester, quarter, or another schedule, so plan your cash flow accordingly.<br><br>This planner is designed around the goal of graduating without student loan debt whenever possible. Explore grants and scholarships, but avoid treating loans as “aid” in this cash-flow plan.</div>
+</div>
+
+<script>
+const ids=['tuition','books','other','degreeYears','scholarships','family','savings','taxRate','wage','hours','weeks','summer','maxHours','wageCap','advancedSavings','preCurrentSavings','preMonthlySavings','preMonths','scholarshipGoal','familyMonthly','targetWage','community','extraScholarship','summerScenario','onHousing','onTransport','offRent','offUtilities','offFood','offTransport','homeTransport','homeFood','homeOther'];
+const $=id=>document.getElementById(id);
+const val=id=>Number($(id).value)||0;
+const money=n=>(Math.abs(n)<.5?"$0":new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(n));
+const signedMoney=n=>`${n>=0?'+':'−'}${money(Math.abs(n))}`;
+let selectedScenario='onCampus';
+function scenarioTotals(){return{onCampus:(val('onHousing')*2)+(val('onTransport')*12),offCampus:(val('offRent')+val('offUtilities')+val('offFood')+val('offTransport'))*12,home:(val('homeOther')+val('homeTransport')+val('homeFood'))*12};}
+function setScenario(name){selectedScenario=name;const cards={onCampus:'cardOnCampus',offCampus:'cardOffCampus',home:'cardHome'};Object.entries(cards).forEach(([key,id])=>{const c=$(id),btn=c.querySelector('button');c.classList.toggle('active',key===name);btn.textContent=key===name?'Current Choice':'Choose This Option';btn.classList.toggle('secondary',key!==name);});calc();}
+function workload(hours){let filled=1;if(hours>=35)filled=5;else if(hours>=30)filled=4;else if(hours>=25)filled=3;else if(hours>=20)filled=2;let blocks='';for(let i=1;i<=5;i++)blocks+=i<=filled?'▰':'<span class="empty">▱</span>';let label='';if(hours>=40)label=' <span class="small"><b>Full-time+</b></span>';else if(hours>=35)label=' <span class="small"><b>Full-time</b></span>';return `<span class="workload"><span class="blocks">${blocks}</span>${label}</span>`;}
+function baseNumbers(){
+ let tuition=val('tuition'), books=val('books'), other=val('other'), scholarships=val('scholarships'), family=val('family'), savings=val('savings'), summerScenarioAdd=0;
+ const totals=scenarioTotals(); let livingCost=totals[selectedScenario]; $('livingCost').value=Math.round(livingCost);
+ if($('community').checked)tuition*=.60;if($('extraScholarship').checked)scholarships+=2000;if($('summerScenario').checked)summerScenarioAdd=5000;
+ const annualCost=tuition+books+other+livingCost, help=scholarships+family+savings+summerScenarioAdd, annualNeed=Math.max(0,annualCost-help);
+ return {tuition,books,other,livingCost,annualCost,help,annualNeed,totals};
+}
+function calc(){
+ const n=baseNumbers(), annualNeed=n.annualNeed, monthlyNeed=annualNeed/12, weeklyNeed=annualNeed/52;
+ const degreeYears=Math.max(1,Math.round(val('degreeYears'))||1), taxRate=parseFloat($('taxRate').value)||0, net=Math.max(.01,1-taxRate);
+ $('onHousingAnnual').textContent=`${money(val('onHousing')*2)}/yr`;$('onTransportAnnual').textContent=`${money(val('onTransport')*12)}/yr`;
+ $('offRentAnnual').textContent=`${money(val('offRent')*12)}/yr`;$('offUtilitiesAnnual').textContent=`${money(val('offUtilities')*12)}/yr`;$('offFoodAnnual').textContent=`${money(val('offFood')*12)}/yr`;$('offTransportAnnual').textContent=`${money(val('offTransport')*12)}/yr`;
+ $('homeOtherAnnual').textContent=`${money(val('homeOther')*12)}/yr`;$('homeTransportAnnual').textContent=`${money(val('homeTransport')*12)}/yr`;$('homeFoodAnnual').textContent=`${money(val('homeFood')*12)}/yr`;
+ $('onTotal').textContent=`${money(n.totals.onCampus)}/yr`;$('offTotal').textContent=`${money(n.totals.offCampus)}/yr`;$('homeTotal').textContent=`${money(n.totals.home)}/yr`;
+ const cheapest=Object.entries(n.totals).sort((a,b)=>a[1]-b[1])[0], savingsVs=n.totals[selectedScenario]-cheapest[1], names={onCampus:'living on campus',offCampus:'renting off campus',home:'living at home'};
+ $('housingInsight').innerHTML=savingsVs>0?`Compared with ${names[selectedScenario]}, ${names[cheapest[0]]} would lower the goal by about <b>${money(savingsVs/12)}/mo</b>.`:`You selected the lowest living-cost scenario in this comparison.`;
+ $('monthlyNeed').textContent=money(monthlyNeed);$('weeklyNeed').textContent=money(weeklyNeed);$('annualNeed').textContent=money(annualNeed);
+ const workNet=(val('wage')*val('hours')*val('weeks')*net)+val('summer'), monthlyIncome=workNet/12, monthlyDiff=monthlyIncome-monthlyNeed, annualDiff=workNet-annualNeed;
+ const pass=annualDiff>=0;
+ $('jobSummary').innerHTML=`
+ <div class="summary-card ${pass?'pass':'fail'}"><div class="top">Answer</div><div class="amount ${pass?'positive':'negative'}">${pass?'Covers Goal':'Falls Short'}</div><div class="small">${pass?'This job plan reaches the monthly goal.':'This job plan does not reach the monthly goal.'}</div></div>
+ <div class="summary-card"><div class="top">Avg. Monthly Income</div><div class="amount">${money(monthlyIncome)}/mo</div><div class="small">Annual income ÷ 12.</div></div>
+ <div class="summary-card"><div class="top">Monthly Difference</div><div class="amount ${monthlyDiff>=0?'positive':'negative'}">${signedMoney(monthlyDiff)}/mo</div><div class="small">${monthlyDiff>=0?'Surplus':'Short'} per month.</div></div>
+ <div class="summary-card"><div class="top">Annual Difference</div><div class="amount ${annualDiff>=0?'positive':'negative'}">${signedMoney(annualDiff)}/yr</div><div class="small">${annualDiff>=0?'Surplus':'Short'} per year.</div></div>`;
+ $('jobNote').innerHTML=`Annual need: <b>${money(annualNeed)}/yr</b>. Annual income from this job plan: <b>${money(workNet)}/yr</b>. <br><span class="small">Extra summer earnings should only include money saved above your normal year-round work schedule, so you do not count the same wages twice.</span>`;
+ updateWageTable(annualNeed,net);updateAdvanced(n,net,degreeYears,workNet,annualDiff);
+}
+function updateWageTable(annualNeed,net){const selectedWage=Math.max(1,Math.round(val('wage'))||1),weeks=Math.max(1,val('weeks')||1);let rows=[];for(let wage=Math.max(1,selectedWage-2);wage<=selectedWage+3;wage++){const hours=annualNeed/(wage*weeks*net);rows.push(`<tr><td>${money(wage)}/hr</td><td>${hours.toFixed(1)} hrs/week</td><td>${workload(hours)}</td></tr>`)}$('wageTable').innerHTML=rows.join('');}
+function hoursForNeed(need, wage, weeks, net) {
+ return need / (Math.max(1,wage) * Math.max(1,weeks) * Math.max(.01,net));
+}
+
+function compoundReducerHTML(before, after, savings, scholarship, familyAnnual) {
+ const diff = Math.max(0, before - after);
+ return `<div class="small">This combines <b>${money(savings)}</b> in savings, <b>${money(scholarship)}/yr</b> in extra scholarships, and <b>${money(familyAnnual)}/yr</b> in family or other help.</div>
+ <div class="reducer-line"><span>Current requirement</span><b>${before.toFixed(1)} hrs/week</b></div>
+ <div class="arrow">↓</div>
+ <div class="reducer-line"><span>With all three combined</span><b>${after.toFixed(1)} hrs/week</b></div>
+ <div class="small"><b>Together, these reduce work during college by about ${diff.toFixed(1)} hrs/week.</b></div>`;
+}
+
+function reducerHTML(before, after) {
+ const diff = Math.max(0, before - after);
+ return `<div class="reducer-line"><span>Current requirement</span><b>${before.toFixed(1)} hrs/week</b></div>
+ <div class="arrow">↓</div>
+ <div class="reducer-line"><span>After this change</span><b>${after.toFixed(1)} hrs/week</b></div>
+ <div class="small"><b>You reduce your work during college by about ${diff.toFixed(1)} hrs/week.</b></div>`;
+}
+function updateAdvanced(n,net,degreeYears,workNet,annualDiff){
+ const annualNeed=n.annualNeed,weeks=Math.max(1,val('weeks')||1),selectedWage=Math.max(1,val('wage')||1),maxHours=Math.max(1,val('maxHours')||1),wageCap=Math.max(0,val('wageCap')||0);
+ const baseHours = hoursForNeed(annualNeed, selectedWage, weeks, net);
+
+ const estimatedPreSavings = val('preCurrentSavings') + (val('preMonthlySavings') * val('preMonths'));
+ $('preSavingsResult').innerHTML = `Estimated savings at college start: <b>${money(estimatedPreSavings)}</b>.`;
+ const savingsAvailable = val('advancedSavings');
+ const afterSavingsNeed = Math.max(0, annualNeed - savingsAvailable);
+ const afterSavingsHours = hoursForNeed(afterSavingsNeed, selectedWage, weeks, net);
+ $('saveBeforeResult').innerHTML = `<div class="small">At your selected wage (<b>${money(selectedWage)}/hr</b>), savings before college can lower the hours you need to work during college.</div>` + reducerHTML(baseHours, afterSavingsHours);
+
+ const scholarship=val('scholarshipGoal'), afterScholar=Math.max(0,annualNeed-scholarship), hoursAfterScholar=hoursForNeed(afterScholar, selectedWage, weeks, net);
+ $('scholarshipResult').innerHTML = `<div class="small">Additional scholarship goal: <b>${money(scholarship)}/yr</b>.</div>` + reducerHTML(baseHours, hoursAfterScholar);
+
+ const familyAnnual=val('familyMonthly')*12, afterFamily=Math.max(0,annualNeed-familyAnnual), hoursAfterFamily=hoursForNeed(afterFamily, selectedWage, weeks, net);
+ $('familyResult').innerHTML = `<div class="small">Additional help: <b>${money(val('familyMonthly'))}/mo</b> (${money(familyAnnual)}/yr).</div>` + reducerHTML(baseHours, hoursAfterFamily);
+
+ const compoundReduction = savingsAvailable + scholarship + familyAnnual;
+ const afterCompoundNeed = Math.max(0, annualNeed - compoundReduction);
+ const hoursAfterCompound = hoursForNeed(afterCompoundNeed, selectedWage, weeks, net);
+ if ($('compoundReducerResult')) {
+   $('compoundReducerResult').innerHTML = compoundReducerHTML(baseHours, hoursAfterCompound, savingsAvailable, scholarship, familyAnnual);
+ }
+
+ const targetWage=Math.max(1,val('targetWage')||1), hoursAfterWage=hoursForNeed(annualNeed, targetWage, weeks, net);
+ $('wageIncreaseResult').innerHTML = `<div class="small">Increasing wage from <b>${money(selectedWage)}/hr</b> to <b>${money(targetWage)}/hr</b>.</div>` + reducerHTML(baseHours, hoursAfterWage);
+
+ const neededWage=annualNeed/(maxHours*weeks*net), cappedIncome=wageCap*maxHours*weeks*net, elsewhere=Math.max(0,annualNeed-cappedIncome);
+ $('targetSchedule').innerHTML=`To work no more than <b>${maxHours} hrs/week</b>, you need about <b>${money(neededWage)}/hr</b>.`;
+ $('wageCapResult').innerHTML=elsewhere>0?`At <b>${money(wageCap)}/hr</b> and <b>${maxHours} hrs/week</b>, you still need <b>${money(elsewhere)}/yr</b> from elsewhere — scholarships, grandparents, parents, gifts, savings, or other help.`:`That capped plan covers the goal with <b>${money(cappedIncome-annualNeed)}/yr</b> to spare.`;
+ updateBars(n.annualCost,n.help,workNet);updateRecommendations(annualNeed,annualDiff,val('hours'),n.livingCost,degreeYears);
+}
+function updateBars(annualCost,help,workNet){const h=Math.min(help,annualCost),w=Math.min(Math.max(annualCost-h,0),workNet),r=Math.max(annualCost-h-w,0);const bar=(lab,amt,total,cls='')=>`<div class="barrow"><div class="barlabel"><span>${lab}</span><span>${money(amt)}</span></div><div class="track"><div class="fill ${cls}" style="width:${total>0?Math.min(100,amt/total*100):0}%"></div></div></div>`;$('bars').innerHTML=bar('Annual college cost',annualCost,annualCost)+bar('Help already available',h,annualCost,'gold')+bar('Work plan income',w,annualCost)+bar('Remaining shortfall',r,annualCost,'red');}
+function updateRecommendations(annualNeed,annualDiff,hours,livingCost,degreeYears){let rec=[];rec.push(annualDiff>=0?`This work plan covers the listed annual need. Keep the surplus as a cushion.`:`Close the shortfall with more scholarships, a higher wage, more hours, lower costs, or a summer savings plan.`);if(hours>=30)rec.push(`This work schedule is heavy. Protect study time before committing to that many hours.`);if(livingCost>8000)rec.push(`Living costs are a major cost driver. Compare housing options carefully.`);rec.push(`Over a ${degreeYears}-year degree, small annual changes multiply. Even $500/yr equals ${money(500*degreeYears)} over the degree.`);$('recommendations').innerHTML=rec.map(r=>`<span class="pill">${r}</span>`).join('');}
+
+function plainTextFromHTML(html){
+ const tmp=document.createElement('div');
+ tmp.innerHTML=html;
+ return tmp.textContent || tmp.innerText || '';
+}
+function scenarioName(){
+ return {onCampus:'Live on Campus',offCampus:'Rent Off Campus',home:'Live at Home'}[selectedScenario] || 'Selected Housing';
+}
+function buildSummaryHTML(){
+ const n=baseNumbers();
+ const taxRate=parseFloat($('taxRate').value)||0;
+ const net=Math.max(.01,1-taxRate);
+ const weeks=Math.max(1,val('weeks')||1);
+ const selectedWage=Math.max(1,val('wage')||1);
+ const baseHours=hoursForNeed(n.annualNeed,selectedWage,weeks,net);
+ const savingsAvailable=val('advancedSavings');
+ const scholarship=val('scholarshipGoal');
+ const familyAnnual=val('familyMonthly')*12;
+ const compoundReduction=savingsAvailable+scholarship+familyAnnual;
+ const afterCompoundNeed=Math.max(0,n.annualNeed-compoundReduction);
+ const hoursAfterCompound=hoursForNeed(afterCompoundNeed,selectedWage,weeks,net);
+ const workNet=(val('wage')*val('hours')*val('weeks')*net)+val('summer');
+ const annualDiff=workNet-n.annualNeed;
+ const date=new Date().toLocaleDateString();
+
+ return `<!DOCTYPE html>
+ <html>
+ <head>
+  <title>College Cash Flow Planner Summary</title>
+  <style>
+   body{font-family:Georgia,Cambria,"Times New Roman",serif;color:#233126;margin:32px;line-height:1.35}
+   h1{font-size:30px;margin:0 0 4px}
+   h2{font-size:18px;margin:22px 0 8px;border-bottom:1px solid #ded6c8;padding-bottom:5px}
+   .muted{color:#607064}
+   .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+   .box{border:1px solid #ded6c8;border-radius:14px;padding:12px;background:#fffdf7}
+   .big{font-size:28px;font-weight:900;color:#2f6b4f}
+   table{width:100%;border-collapse:collapse;margin-top:8px}
+   td,th{border-bottom:1px solid #ded6c8;padding:8px;text-align:left}
+   th{color:#607064;text-transform:uppercase;font-size:12px;letter-spacing:.06em}
+   .note{background:#e2f0e7;border:1px solid #cce4d5;border-radius:14px;padding:12px;margin-top:12px}
+   @media print{button{display:none}body{margin:22px}.box{break-inside:avoid}}
+  </style>
+ </head>
+ <body>
+  <h1>College Cash Flow Planner Summary</h1>
+  <div class="muted">Created ${date}</div>
+
+  <h2>Main Goal</h2>
+  <div class="grid">
+   <div class="box"><div class="muted">Monthly income goal</div><div class="big">${money(n.annualNeed/12)}/mo</div></div>
+   <div class="box"><div class="muted">Annual income goal</div><div class="big">${money(n.annualNeed)}/yr</div></div>
+  </div>
+
+  <h2>College Cost Estimate</h2>
+  <table>
+   <tr><th>Category</th><th>Amount</th></tr>
+   <tr><td>Tuition & fees</td><td>${money(n.tuition)}/yr</td></tr>
+   <tr><td>Books & supplies</td><td>${money(n.books)}/yr</td></tr>
+   <tr><td>Other school expenses</td><td>${money(n.other)}/yr</td></tr>
+   <tr><td>Housing choice</td><td>${scenarioName()}</td></tr>
+   <tr><td>Living cost</td><td>${money(n.livingCost)}/yr</td></tr>
+   <tr><td><b>Total annual cost</b></td><td><b>${money(n.annualCost)}/yr</b></td></tr>
+   <tr><td>Help already available</td><td>${money(n.help)}/yr</td></tr>
+   <tr><td><b>Annual need after help</b></td><td><b>${money(n.annualNeed)}/yr</b></td></tr>
+  </table>
+
+  <h2>Work Plan</h2>
+  <table>
+   <tr><th>Item</th><th>Plan</th></tr>
+   <tr><td>Hourly wage</td><td>${money(val('wage'))}/hr</td></tr>
+   <tr><td>Regular hours</td><td>${val('hours')} hrs/week</td></tr>
+   <tr><td>Weeks worked</td><td>${val('weeks')} weeks/year</td></tr>
+   <tr><td>Extra summer earnings saved</td><td>${money(val('summer'))}</td></tr>
+   <tr><td>Estimated after-tax work income</td><td>${money(workNet)}/yr</td></tr>
+   <tr><td>Annual difference</td><td>${annualDiff>=0?'+':'-'}${money(Math.abs(annualDiff))}/yr</td></tr>
+  </table>
+  <div class="note">Extra summer earnings should only include money saved above the normal year-round work schedule, so the same wages are not counted twice.</div>
+
+  <h2>Combined Workload Reducer</h2>
+  <table>
+   <tr><th>Reducer</th><th>Amount</th></tr>
+   <tr><td>Savings before college</td><td>${money(savingsAvailable)}</td></tr>
+   <tr><td>Additional scholarships</td><td>${money(scholarship)}/yr</td></tr>
+   <tr><td>Family or other help</td><td>${money(familyAnnual)}/yr</td></tr>
+   <tr><td><b>Total combined reduction</b></td><td><b>${money(compoundReduction)}</b></td></tr>
+  </table>
+  <div class="note"><b>Current requirement:</b> ${baseHours.toFixed(1)} hrs/week<br>
+  <b>With all three combined:</b> ${hoursAfterCompound.toFixed(1)} hrs/week<br>
+  <b>Workload reduced by:</b> ${Math.max(0,baseHours-hoursAfterCompound).toFixed(1)} hrs/week</div>
+
+  <h2>Recommendations</h2>
+  <div class="note">${plainTextFromHTML($('recommendations').innerHTML)}</div>
+
+  <button onclick="window.print()">Print / Save as PDF</button>
+  <script>window.addEventListener('load',()=>setTimeout(()=>window.print(),300));<\/script>
+ </body>
+ </html>`;
+}
+function openSummaryPDF(){
+ const summaryWindow=window.open('', '_blank');
+ summaryWindow.document.open();
+ summaryWindow.document.write(buildSummaryHTML());
+ summaryWindow.document.close();
+}
+
+
+const printSummaryBtn=document.getElementById('printSummary');if(printSummaryBtn)printSummaryBtn.addEventListener('click',openSummaryPDF);
+document.querySelectorAll('button[data-scenario]').forEach(btn=>btn.addEventListener('click',()=>setScenario(btn.dataset.scenario)));
+document.getElementById('usePreSavings').addEventListener('click',()=>{document.getElementById('advancedSavings').value=val('preCurrentSavings')+(val('preMonthlySavings')*val('preMonths')); calc();});
+ids.forEach(id=>$(id).addEventListener('input',calc));ids.forEach(id=>$(id).addEventListener('change',calc));setScenario('onCampus');
+</script>
+</body>
+</html>
